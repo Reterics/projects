@@ -7,11 +7,12 @@ import {
     Button,
     Stack,
     useBreakpointValue,
-    useDisclosure, IconButton,
+    useDisclosure, IconButton, Link
 } from '@chakra-ui/react'
-import { Link as ChakraLink } from "@chakra-ui/react"
 import NextLink from "next/link"
 import { GiHamburgerMenu } from "react-icons/gi";
+import styles from "@/app/page.module.css";
+import Image from "next/image";
 
 export interface NavItem {
     label: string
@@ -30,8 +31,11 @@ const NavigationBar = ({navItems}: {navItems: NavItem[]}) => {
                 minH={'60px'}
                 py={{ base: 2 }}
                 px={{ base: 4 }}
-                borderBottom={1}
+                borderTop={1}
                 borderStyle={'solid'}
+                bottom={0}
+                position="fixed"
+                width={"100%"}
                 align={'center'}>
                 <Flex
                     flex={{ base: 1, md: 'auto' }}
@@ -44,14 +48,20 @@ const NavigationBar = ({navItems}: {navItems: NavItem[]}) => {
                     ><GiHamburgerMenu /></IconButton>
                 </Flex>
                 <Flex flex={{ base: 1 }} justify={{ base: 'center', md: 'start' }}>
+                    <Image
+                        className={styles.logo}
+                        src="/logoWhite.png"
+                        alt="Next.js logo"
+                        width={32}
+                        height={32}
+                        priority
+                        style={{marginRight: '0.5rem'}}
+                    />
                     <Text
-                        textAlign={useBreakpointValue({ base: 'center', md: 'left' })}
                         fontFamily={'heading'}>
-                        Logo
+                        Projects
                     </Text>
 
-                    <Flex display={{ base: 'none', md: 'flex' }} ml={10}>
-                    </Flex>
                 </Flex>
 
                 <Stack
@@ -59,9 +69,9 @@ const NavigationBar = ({navItems}: {navItems: NavItem[]}) => {
                     justify={'flex-end'}
                     direction={'row'}
                     >
-                    <ChakraLink asChild as={'a'} fontSize={'sm'} fontWeight={400} href={'#'}>
+                    <Link asChild as={'a'} fontSize={'sm'} fontWeight={400} href={'#'}>
                         <NextLink href={'#'}>Sign In</NextLink>
-                    </ChakraLink>
+                    </Link>
                     <Button
                         as={'a'}
                         display={{ base: 'none', md: 'inline-flex' }}
