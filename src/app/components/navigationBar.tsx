@@ -1,19 +1,6 @@
 'use client';
 
-import {
-    Box,
-    Flex,
-    Text,
-    Button,
-    Stack,
-    useDisclosure,
-    IconButton,
-    Link,
-} from '@chakra-ui/react';
-import NextLink from 'next/link';
-import { GiHamburgerMenu } from 'react-icons/gi';
-import styles from '@/app/page.module.css';
-import Image from 'next/image';
+import { useState } from 'react';
 
 export interface NavItem {
     label: string;
@@ -23,80 +10,40 @@ export interface NavItem {
 }
 
 const NavigationBar = ({ navItems }: { navItems: NavItem[] }) => {
-    const { open, onToggle } = useDisclosure();
+    const [searchQuery, setSearchQuery] = useState('');
+
+    const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchQuery(event.target.value);
+    };
 
     return (
-        <Box>
-            <Flex
-                minH={'60px'}
-                py={{ base: 2 }}
-                px={{ base: 4 }}
-                borderTop={1}
-                borderStyle={'solid'}
-                bottom={0}
-                position='fixed'
-                width={'100%'}
-                align={'center'}
-            >
-                <Flex
-                    flex={{ base: 1, md: 'auto' }}
-                    ml={{ base: -2 }}
-                    display={{ base: 'flex', md: 'none' }}
-                >
-                    <IconButton
-                        onClick={onToggle}
-                        variant={'ghost'}
-                        aria-label={'Toggle Navigation'}
-                    >
-                        <GiHamburgerMenu />
-                    </IconButton>
-                </Flex>
-                <Flex
-                    flex={{ base: 1 }}
-                    justify={{ base: 'center', md: 'start' }}
-                >
-                    <Image
-                        className={styles.logo}
-                        src='/logoWhite.png'
-                        alt='Next.js logo'
-                        width={32}
-                        height={32}
-                        priority
-                        style={{ marginRight: '0.5rem' }}
+        <div className='fixed bottom-0 left-0 right-0 bg-gray-800 text-white shadow-lg z-50'>
+            <div className='flex justify-between items-center p-4'>
+                {/* Search Bar */}
+                <div className='relative flex items-center w-1/2'>
+                    <input
+                        type='text'
+                        value={searchQuery}
+                        onChange={handleSearchChange}
+                        placeholder='Search...'
+                        className='w-full py-2 px-4 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500'
                     />
-                    <Text fontFamily={'heading'}>Projects</Text>
-                </Flex>
+                </div>
 
-                <Stack
-                    flex={{ base: 1, md: 0 }}
-                    justify={'flex-end'}
-                    direction={'row'}
-                >
-                    <Link
-                        asChild
-                        as={'a'}
-                        fontSize={'sm'}
-                        fontWeight={400}
-                        href={'#'}
-                    >
-                        <NextLink href={'#'}>Sign In</NextLink>
-                    </Link>
-                    <Button
-                        as={'a'}
-                        display={{ base: 'none', md: 'inline-flex' }}
-                        fontSize={'sm'}
-                        fontWeight={600}
-                        color={'white'}
-                        bg={'pink.400'}
-                        _hover={{
-                            bg: 'pink.300',
-                        }}
-                    >
-                        Sign Up
-                    </Button>
-                </Stack>
-            </Flex>
-        </Box>
+                {/* Navigation Items */}
+                <div className='flex space-x-4'>
+                    {navItems.map((item, index) => (
+                        <a
+                            key={index}
+                            href={item.href || '#'}
+                            className='text-white hover:text-blue-400 transition-colors'
+                        >
+                            {item.label}
+                        </a>
+                    ))}
+                </div>
+            </div>
+        </div>
     );
 };
 
