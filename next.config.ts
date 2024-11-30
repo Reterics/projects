@@ -5,6 +5,9 @@ const nextConfig: NextConfig = {
         optimizePackageImports: [],
     },
     reactStrictMode: true,
+    images: {
+        unoptimized: true,
+    },
 };
 
 export default nextConfig;
