@@ -19,9 +19,10 @@ export interface RunningApp {
     label: string;
     className?: string;
     icon: React.ReactNode;
-    commandHandler?: ()=>void;
+    command?: () => void;
     show: boolean;
     onClose?: () => void;
+    entry?: React.ReactNode
 }
 
 
@@ -30,6 +31,42 @@ export default function Home() {
     const [apps, setApps] = useState<RunningApp[]>([]);
     const toast = useRef<Toast>(null);
     const toast2 = useRef<Toast>(null);
+
+    const focusAppById = (id: string)=> {
+        let dialogNode: HTMLElement|null = null;
+        let maxZIndex = 1;
+        for (const node of document.querySelectorAll('.running-app-dialog')) {
+            if (node.id === 'app_' + id) {
+                dialogNode = node.parentElement as HTMLElement;
+            }
+
+            const unitValue = node.parentElement?.computedStyleMap().get('z-index') as CSSUnitValue;
+
+            const zIndex = unitValue.unit === 'number' ? Number(unitValue.value) : 0;
+            if (zIndex && !Number.isNaN(zIndex) && maxZIndex < zIndex) {
+                if (node.id === 'app_' + id) {
+                    dialogNode = node.parentElement as HTMLElement;
+                } else {
+                    maxZIndex = zIndex;
+                }
+            } else if (node.id === 'app_' + id) {
+                dialogNode = node.parentElement as HTMLElement;
+            }
+        }
+        maxZIndex++;
+        if (dialogNode) {
+            dialogNode.style.zIndex = maxZIndex.toString();
+        }
+    };
+
+    const hideAppById = (id: string)=>{
+        setApps(prevApps => [...prevApps.map(app => {
+            if (app.id === id) {
+                app.show = false;
+            }
+            return app;
+        })])
+    };
 
     const menubarItems :MenuItem[] = [
         {
@@ -44,23 +81,20 @@ export default function Home() {
                     icon: 'pi pi-fw pi-code',
                     command() {
                         const id = new Date().getTime().toString()
-                        setApps([...apps, {
-                            id,
-                            label: 'Terminal',
-                            icon: <div className="bg-white p-4 flex items-center justify-center"><i className="pi pi-fw pi-code text-xl"/></div>,
-                            commandHandler: ()=> {
-                                console.log('Called')
-                            },
-                            show: true,
-                            onClose: ()=> {
-                                setApps([...apps.map(app => {
-                                    if (app.id === id) {
-                                        app.show = false;
-                                    }
-                                    return app;
-                                })])
-                            }
-                        }])
+
+                        setApps((prevApps) => {
+                            return [...prevApps, {
+                                id,
+                                label: 'Terminal',
+                                icon: <div className="bg-white p-4 flex items-center justify-center"><i
+                                    className="pi pi-fw pi-code text-xl"/></div>,
+                                show: true,
+                                command: () => focusAppById(id),
+                                onClose: () => hideAppById(id),
+                                entry: <Terminal welcomeMessage="Welcome to Projects Framework"
+                                                 prompt="projects $"/>
+                            }];
+                        })
                     }
                 },
                 {
@@ -130,18 +164,19 @@ export default function Home() {
                 <Dock model={apps}></Dock>
                 {apps
                     .map((app, index)=>
-                        app.label === 'Terminal' &&
-                        <Dialog key={'app_' + index}
-                                header={<span className="text-lg">Terminal</span>}
-                                className="terminal-dialog"
+                        <Dialog key={'app_' + app.id + '_' + index}
+                                id={'app_' + app.id}
+                                header={<div className="text-lg" onClick={()=> app.command?.()}>Terminal</div>}
+                                draggable={true}
+                                className="terminal-dialog running-app-dialog"
                                 visible={app.show} breakpoints={{'960px': '50vw', '600px': '75vw'}}
                                 resizable={true}
                                 modal={false}
-                                style={{width: '30vw'}} onHide={() => app.onClose && app.onClose()}
+                                style={{width: '30vw'}}
+                                onHide={() => app.onClose && app.onClose()}
                                 maximizable
                                 blockScroll={false}>
-                            <Terminal welcomeMessage="Welcome to Projects Framework"
-                                      prompt="projects $"/>
+                            {app.entry}
                         </Dialog>
                 )}
 
