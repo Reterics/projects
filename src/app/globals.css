@@ -29,3 +29,21 @@ body {
     border-radius: 10px;
     margin-bottom: 1rem;
 }
+
+.p-dialog .p-dialog-header-icons {
+    flex-direction: row-reverse;
+}
+
+.p-dialog .p-dialog-header .p-dialog-header-icon {
+    margin-right: 0.5rem;
+}
+
+.p-dialog .p-dialog-header .p-dialog-header-icon:first-child {
+    margin-right: 0;
+}
+
+@media screen and (max-width: 960px) {
+    .p-menubar-start {
+        padding-right: 4px
+    }
+}

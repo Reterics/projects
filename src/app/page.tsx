@@ -13,6 +13,7 @@ import {getCurrentTime} from "@/app/utils/common";
 import {TerminalService} from "primereact/terminalservice";
 import {Dock} from "primereact/dock";
 
+export interface DialogPosition {}
 
 export interface RunningApp {
     id: string;
@@ -20,9 +21,11 @@ export interface RunningApp {
     className?: string;
     icon: React.ReactNode;
     command?: () => void;
+    focus?: () => void;
     show: boolean;
     onClose?: () => void;
-    entry?: React.ReactNode
+    entry?: React.ReactNode;
+    position?: DialogPosition;
 }
 
 
@@ -56,19 +59,33 @@ export default function Home() {
         maxZIndex++;
         if (dialogNode) {
             dialogNode.style.zIndex = maxZIndex.toString();
+            dialogNode.style.display = 'flex';
         }
     };
 
-    const hideAppById = (id: string)=>{
-        setApps(prevApps => [...prevApps.map(app => {
-            if (app.id === id) {
-                app.show = false;
-            }
-            return app;
-        })])
+    const hideAppById = (id: string)=> {
+        const dialogNode = document.getElementById('app_' + id);
+        if (dialogNode?.parentElement) {
+            dialogNode.parentElement.style.display = 'none';
+        }
     };
 
-    const menubarItems :MenuItem[] = [
+    const getDockIcon = (icon: string, id: string) => {
+
+        return (
+            <div className="bg-white p-4 flex items-center justify-center">
+                <button onClick={(event)=>{
+                    event.preventDefault();
+                    setApps(prevApps => [...prevApps.filter(app => app.id!== id)])
+                }}><i className="absolute top-0 right-0 pi pi-times p-0.5 bg-gray-50"></i></button>
+
+
+                <i className={"pi " + icon + " text-xl"}/>
+            </div>
+        )
+    };
+
+    const menubarItems: MenuItem[] = [
         {
             label: 'Home',
             className: 'menubar-root'
@@ -79,17 +96,19 @@ export default function Home() {
                 {
                     label: 'Terminal',
                     icon: 'pi pi-fw pi-code',
+
                     command() {
                         const id = new Date().getTime().toString()
-
                         setApps((prevApps) => {
                             return [...prevApps, {
                                 id,
                                 label: 'Terminal',
-                                icon: <div className="bg-white p-4 flex items-center justify-center"><i
-                                    className="pi pi-fw pi-code text-xl"/></div>,
+                                icon: getDockIcon('pi-fw pi-code', id),
                                 show: true,
-                                command: () => focusAppById(id),
+                                focus: () => focusAppById(id),
+                                command: () => {
+                                    focusAppById(id);
+                                },
                                 onClose: () => hideAppById(id),
                                 entry: <Terminal welcomeMessage="Welcome to Projects Framework"
                                                  prompt="projects $"/>
@@ -166,7 +185,7 @@ export default function Home() {
                     .map((app, index)=>
                         <Dialog key={'app_' + app.id + '_' + index}
                                 id={'app_' + app.id}
-                                header={<div className="text-lg" onClick={()=> app.command?.()}>Terminal</div>}
+                                header={<button className="text-lg" onClick={()=> app.focus?.()}>Terminal</button>}
                                 draggable={true}
                                 className="terminal-dialog running-app-dialog"
                                 visible={app.show} breakpoints={{'960px': '50vw', '600px': '75vw'}}
@@ -175,6 +194,7 @@ export default function Home() {
                                 style={{width: '30vw'}}
                                 onHide={() => app.onClose && app.onClose()}
                                 maximizable
+                                closeIcon={<i className="pi pi-sort-down-fill"/>}
                                 blockScroll={false}>
                             {app.entry}
                         </Dialog>
