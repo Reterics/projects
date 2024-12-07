@@ -12,6 +12,7 @@ import {getCurrentTime} from "@/app/utils/common";
 import {Dock} from "primereact/dock";
 import PTerminal from "@/app/pwa/pTerminal";
 import PWA from "@/app/pwa/pwa";
+import Notes from "@/app/pwa/notes/index";
 
 export interface RunningApp {
     id: string;
@@ -22,7 +23,7 @@ export interface RunningApp {
     focus?: () => void;
     show: boolean;
     onClose?: () => void;
-    entry: () => React.ReactNode;
+    entry: React.ReactNode;
 }
 
 
@@ -103,7 +104,27 @@ export default function Home() {
                                 focus: () => focusAppById(id),
                                 command: () => focusAppById(id),
                                 onClose: () => hideAppById(id),
-                                entry: () => PTerminal({}),
+                                entry: <PTerminal />,
+                            }];
+                        })
+                    }
+                },
+                {
+                    label: 'Notes',
+                    icon: 'pi pi-book',
+
+                    command() {
+                        const id = new Date().getTime().toString()
+                        setApps((prevApps) => {
+                            return [...prevApps, {
+                                id,
+                                label: 'Notes',
+                                icon: getDockIcon('pi pi-book', id),
+                                show: true,
+                                focus: () => focusAppById(id),
+                                command: () => focusAppById(id),
+                                onClose: () => hideAppById(id),
+                                entry: <Notes  content={''}/>,
                             }];
                         })
                     }
@@ -123,10 +144,7 @@ export default function Home() {
                                 focus: () => focusAppById(id),
                                 command: () => focusAppById(id),
                                 onClose: () => hideAppById(id),
-                                entry: () => PWA({
-                                    title: 'NAS',
-                                    src: 'https://reterics.synology.me:5001/'
-                                }),
+                                entry: <PWA src='https://reterics.synology.me:5001/' title='NAS'/>
                             }];
                         })
                     }
@@ -165,7 +183,7 @@ export default function Home() {
                     .map((app, index)=>
                         <Dialog key={'app_' + app.id + '_' + index}
                                 id={'app_' + app.id}
-                                header={<button className="text-lg" onClick={()=> app.focus?.()}>Terminal</button>}
+                                header={<button className="text-lg" onClick={()=> app.focus?.()}>{app.label}</button>}
                                 draggable={true}
                                 className="terminal-dialog running-app-dialog"
                                 visible={app.show} breakpoints={{'960px': '50vw', '600px': '75vw'}}
@@ -176,7 +194,7 @@ export default function Home() {
                                 maximizable
                                 closeIcon={<i className="pi pi-sort-down-fill"/>}
                                 blockScroll={false}>
-                            {app.entry()}
+                            {app.entry}
                         </Dialog>
                 )}
 

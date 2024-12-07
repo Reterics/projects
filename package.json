@@ -11,13 +11,16 @@
     "format:fix": "prettier --write --ignore-path .gitignore ./src"
   },
   "dependencies": {
+    "@tiptap/pm": "^2.10.3",
+    "@tiptap/react": "^2.10.3",
+    "@tiptap/starter-kit": "^2.10.3",
     "next": "15.0.3",
     "next-themes": "0.4.3",
+    "primeicons": "^7.0.0",
+    "primereact": "^10.8.5",
     "react": "19.0.0-rc.1",
     "react-dom": "19.0.0-rc.1",
     "react-icons": "5.3.0",
-    "primereact": "^10.8.5",
-    "primeicons": "^7.0.0",
     "tailwind-merge": "2.5.5"
   },
   "devDependencies": {
@@ -30,6 +33,7 @@
     "eslint-config-prettier": "9.1.0",
     "postcss": "^8.4.49",
     "prettier": "^3.4.1",
+    "sass": "^1.82.0",
     "tailwindcss": "^3.4.15",
     "typescript": "5.7.2"
   }
