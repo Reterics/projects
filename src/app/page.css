@@ -49,6 +49,8 @@
     top: 20px;
 }
 .system-outer .p-menubar {
+    display: flex;
+    align-items: center;
     padding-top: 0;
     padding-bottom: 0;
     border-radius: 0;

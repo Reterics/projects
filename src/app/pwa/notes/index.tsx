@@ -1,6 +1,10 @@
 'use client'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
+import Table from '@tiptap/extension-table'
+import TableHeader from '@tiptap/extension-table-header'
+import TableRow from '@tiptap/extension-table-row'
+import TableCell from '@tiptap/extension-table-cell'
 import {Editor} from "@tiptap/core";
 import './style.scss';
 
@@ -15,9 +19,9 @@ export interface NoteMenuProps {
 export const tableHTML = `
   <table style="width:100%">
     <tr>
-      <th>Firstname</th>
-      <th>Lastname</th>
-      <th>Age</th>
+      <td><strong>Firstname</strong></td>
+      <td><strong>Lastname</strong></td>
+      <td><strong>Lastname</strong></td>
     </tr>
     <tr>
       <td>Jill</td>
@@ -40,17 +44,24 @@ export const tableHTML = `
 export function NoteMenu({ editor }: Readonly<NoteMenuProps>) {
     if (!editor) return null;
 
-    const buttonClass = (isActive?: boolean) => !isActive ?
-        "p-1 px-2 cursor-pointer" : "p-1 px-2 cursor-pointer font-bold bg-gray-200 border rounded-md";
+    const buttonClass = (isActive?: boolean, icon?:boolean) => {
+        const textSize = (!icon ? "  text-lg" : "")
+        if (!isActive) {
+            return "p-0 px-2 cursor-pointer" + textSize;
+        } else {
+            return "p-0 px-2 cursor-pointer text-lg font-bold bg-gray-200 border rounded-md" + textSize;
+        }
+    };
+
     return (
         <div className="w-full flex flex-row flex-wrap">
             <button
-                className={buttonClass() + " pi pi-undo"}
+                className={buttonClass(false, true) + " pi pi-undo"}
                 onClick={() => editor.chain().focus().undo().run()}>
 
             </button>
             <button
-                className={buttonClass() + " pi pi-refresh"}
+                className={buttonClass(false, true) + " pi pi-refresh border-r-2 border-r-gray-200"}
                 onClick={() => editor.chain().focus().redo().run()}>
 
             </button>
@@ -74,29 +85,29 @@ export function NoteMenu({ editor }: Readonly<NoteMenuProps>) {
             </button>
             <button
                 onClick={() => editor.chain().focus().toggleCode().run()}
-                className={buttonClass(editor.isActive('code')) + " pi pi-code"}
+                className={buttonClass(editor.isActive('code'), true) + " pi pi-code"}
             >
             </button>
             <button
                 onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-                className={buttonClass(editor.isActive('codeBlock')) + " pi pi-code border rounded"}
+                className={buttonClass(editor.isActive('codeBlock'), true) + " pi pi-code border rounded"}
             >
             </button>
             <button
                 onClick={() => editor.chain().focus().toggleBlockquote().run()}
-                className={buttonClass(editor.isActive('blockquote'))}
+                className={buttonClass(editor.isActive('blockquote'), true) + " text-2xl mb-[-0.5rem]"}
             >
-                Quote
+                &#34;
             </button>
 
             <button
                 onClick={() => editor.chain().focus().toggleBulletList().run()}
-                className={buttonClass(editor.isActive('bulletList')) + " pi pi-list"}
+                className={buttonClass(editor.isActive('bulletList'), true) + " pi pi-list"}
             >
             </button>
             <button
                 onClick={() => editor.chain().focus().toggleOrderedList().run()}
-                className={buttonClass(editor.isActive('orderedList')) + " pi pi-list-check"}
+                className={buttonClass(editor.isActive('orderedList'), true) + " pi pi-list-check"}
             >
             </button>
             <button
@@ -105,13 +116,13 @@ export function NoteMenu({ editor }: Readonly<NoteMenuProps>) {
                         preserveWhitespace: false,
                     },
                 }).run()}
-                className={buttonClass() + " pi pi-table"}
+                className={buttonClass(false, true) + " pi pi-table"}
             >
             </button>
 
 
             <select
-                className={buttonClass()}
+                className={buttonClass(false, true)}
 
                 onChange={(e) => {
                     const value = e.target.value;
@@ -131,22 +142,22 @@ export function NoteMenu({ editor }: Readonly<NoteMenuProps>) {
                 ))}
             </select>
             <button
-                className={buttonClass()}
+                className={buttonClass(false, true)}
                 onClick={() => editor.chain().focus().setHorizontalRule().run()}>
                 HR
             </button>
             <button
-                className={buttonClass()}
+                className={buttonClass(false, true)}
                 onClick={() => editor.chain().focus().setHardBreak().run()}>
                 BR
             </button>
             <button
-                className={buttonClass() + ' pi pi-eraser'}
+                className={buttonClass(false, true) + ' pi pi-eraser'}
                 onClick={() => editor.chain().focus().unsetAllMarks().run()}>
                 marks
             </button>
             <button
-                className={buttonClass() + ' pi pi-eraser'}
+                className={buttonClass(false, true) + ' pi pi-eraser'}
 
                 onClick={() => editor.chain().focus().clearNodes().run()}>
                 nodes
@@ -157,7 +168,15 @@ export function NoteMenu({ editor }: Readonly<NoteMenuProps>) {
 
 export default function Notes({content}: Readonly<NoteProps>) {
     const editor = useEditor({
-        extensions: [StarterKit],
+        extensions: [
+            StarterKit,
+            Table.configure({
+                resizable: true,
+            }),
+            TableHeader,
+            TableRow,
+            TableCell
+        ],
         content: content,
         editorProps: {
             attributes: {

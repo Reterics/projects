@@ -11,9 +11,14 @@
     "format:fix": "prettier --write --ignore-path .gitignore ./src"
   },
   "dependencies": {
+    "@tiptap/extension-table": "^2.10.3",
+    "@tiptap/extension-table-cell": "^2.10.3",
+    "@tiptap/extension-table-header": "^2.10.3",
+    "@tiptap/extension-table-row": "^2.10.3",
     "@tiptap/pm": "^2.10.3",
     "@tiptap/react": "^2.10.3",
     "@tiptap/starter-kit": "^2.10.3",
+    "install": "^0.13.0",
     "next": "15.0.3",
     "next-themes": "0.4.3",
     "primeicons": "^7.0.0",
