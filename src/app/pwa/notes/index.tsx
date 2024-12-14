@@ -11,6 +11,7 @@ import IDBStore from "@/app/database/stores/IDBStore.ts";
 import {useEffect, useRef, useState} from "react";
 import {IDBData} from "@/app/database/DBModel.ts";
 import { Toast } from 'primereact/toast';
+import {FirebaseStore} from "@/app/database/stores/FirebaseStore.ts";
 
 export interface NoteType extends IDBData {
     content: string
@@ -185,29 +186,49 @@ export function NoteMenu({ editor, saveNoteAction }: Readonly<NoteMenuProps>) {
     )
 }
 
-export function NoteBrowser({notes, setNoteAction}: Readonly<{ notes: NoteType[], setNoteAction: (note: NoteType) => void }>) {
-    return <div className='flex flex-col min-w-32 border border-gray-400 p-1'>
+export function NoteBrowser({notes, setNoteAction, syncNotesAction}: Readonly<{ notes: NoteType[], setNoteAction: (note: NoteType) => void, syncNotesAction: () => Promise<void> }>) {
+    const [loading, setLoading] = useState<boolean>(false);
+
+    return <div className='flex flex-col min-w-32 border border-gray-400'>
         <button
-            key={"note_null"}
-            className='w-full p-1 border-b-2 border-gray-400'
+            key={"note_add"}
+            className='w-full p-1 border-b-2 border-gray-400 hover:bg-gray-200'
             onClick={() => setNoteAction(getEmptyNote())}
-        >Add</button>
-        {notes.map((note) =>
-            <button
-                key={"note_" + note.id}
-                className='w-full p-1 border-b-2 border-gray-200'
-                onClick={() => setNoteAction(note)}
-            >
-                <div className="text-left font-semibold">{note.name}</div>
-                <div className="ps-2">{note.excerpt ?? note.content.split('</p>')[0]
-                    .replace(/<p>/g, '')
-                    .substring(0, 10)}...</div>
-            </button>
-        )}
+        ><span className="pi pi-plus mr-1"></span>Add</button>
+
+        <div className="flex flex-1 flex-col p-1">
+            {notes.map((note) =>
+                <button
+                    key={"note_" + note.id}
+                    className='w-full p-1 border-b-2 border-gray-200 hover:bg-gray-100'
+                    onClick={() => setNoteAction(note)}
+                >
+                    <div className="text-left font-semibold">{note.name}</div>
+                    <div className="ps-2">{note.excerpt ?? note.content.split('</p>')[0]
+                        .replace(/<p>/g, '')
+                        .substring(0, 10)}...</div>
+                </button>
+            )}
+        </div>
+        <button
+            key={"note_sync"}
+            className='w-full p-1 border-t-2 border-gray-400 bg-gray-50 hover:bg-gray-200'
+            onClick={() => {
+                if (loading) {
+                    return
+                }
+                setLoading(true)
+                syncNotesAction().finally(() => setLoading(false));
+            }}
+        ><span className={"pi " + (loading ? "pi-spin " : "") + "pi-sync mr-1"}></span>Sync
+        </button>
     </div>;
 }
 
-export function NoteEditor({note, saveNoteAction}: Readonly<{ note: NoteType, saveNoteAction: (note: NoteType) => void }>) {
+export function NoteEditor({note, saveNoteAction}: Readonly<{
+    note: NoteType,
+    saveNoteAction: (note: NoteType) => void
+}>) {
     const editor = useEditor({
         extensions: [
             StarterKit,
@@ -236,8 +257,9 @@ export function NoteEditor({note, saveNoteAction}: Readonly<{ note: NoteType, sa
         <NoteMenu editor={editor} saveNoteAction={(html: string, text)=> {
             note.content = html;
             const lineBreak = text.indexOf("\n");
-            note.name = text.substring(0, lineBreak <= 1 ? 10 : lineBreak);
-            note.excerpt = text.substring(lineBreak <= 1 ? 10 : lineBreak, 10)
+            const nameEnd = lineBreak <= 1 ? 10 : lineBreak;
+            note.name = text.substring(0, nameEnd);
+            note.excerpt = text.substring(nameEnd + 1, nameEnd + 11)
             saveNoteAction(note)
         }}/>
         <EditorContent editor={editor} className='h-full'/>
@@ -247,15 +269,27 @@ export function NoteEditor({note, saveNoteAction}: Readonly<{ note: NoteType, sa
 export default function Notes() {
     const [notes, setNotes] = useState<NoteType[]>([]);
     const [note, setNote] = useState<NoteType>(getEmptyNote());
-    const store = useRef(new IDBStore({
-        tables: ['notes']
-    }));
+
+    const store = useRef<IDBStore>();
+    if (!store.current) {
+        store.current = new IDBStore({
+            tables: ['notes']
+        })
+    }
+
+    const fireStore = useRef<FirebaseStore>();
+    if (!fireStore.current) {
+        fireStore.current = new FirebaseStore({
+            tables: ['notes']
+        })
+    }
+
     const toast = useRef<Toast|null>(null);
 
     useEffect(() => {
         if(store.current) {
             store.current.load().then(()=> {
-                setNotes(store.current.getAll('notes').toReversed() as NoteType[])
+                setNotes(store.current?.getAll('notes').toReversed() as NoteType[])
             })
         }
     }, []);
@@ -270,14 +304,28 @@ export default function Notes() {
         } else {
             await store.current.push(note, 'notes');
         }
-        console.error(store.current.getAll('notes').toReversed())
         setNotes(store.current.getAll('notes').toReversed() as NoteType[]);
 
         toast.current?.show({ severity: 'info', summary: 'Info', detail: 'Note Saved' });
     }
 
+    const syncNotesAction = async () => {
+        if (!fireStore.current?.ready()) {
+            throw new Error('FireStore is not ready');
+        }
+        if (!store.current) {
+            throw new Error('IDBStore is undefined');
+        }
+        await fireStore.current.load();
+        await fireStore.current.syncData({
+            notes: store.current.getAll('notes')
+        });
+
+        toast.current?.show({ severity: 'info', summary: 'Info', detail: 'Data synced with Firestore' });
+    }
+
     return <div className='flex flex-row h-full'>
-        <NoteBrowser notes={notes} setNoteAction={setNote}></NoteBrowser>
+        <NoteBrowser notes={notes} setNoteAction={setNote} syncNotesAction={syncNotesAction}></NoteBrowser>
         <NoteEditor note={note} saveNoteAction={saveNoteAction}></NoteEditor>
         <Toast ref={toast} />
     </div>

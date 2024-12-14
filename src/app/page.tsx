@@ -124,7 +124,7 @@ export default function Home() {
                                 focus: () => focusAppById(id),
                                 command: () => focusAppById(id),
                                 onClose: () => hideAppById(id),
-                                entry: <Notes  content={''}/>,
+                                entry: <Notes />,
                             }];
                         })
                     }
@@ -186,10 +186,10 @@ export default function Home() {
                                 header={<button className="text-lg" onClick={()=> app.focus?.()}>{app.label}</button>}
                                 draggable={true}
                                 className="terminal-dialog running-app-dialog"
-                                visible={app.show} breakpoints={{'960px': '50vw', '600px': '75vw'}}
+                                visible={app.show} breakpoints={{'960px': '60vw', '600px': '75vw'}}
                                 resizable={true}
                                 modal={false}
-                                style={{width: '30vw'}}
+                                style={{width: '50vw'}}
                                 onHide={() => app.onClose && app.onClose()}
                                 maximizable
                                 closeIcon={<i className="pi pi-sort-down-fill"/>}

@@ -116,6 +116,7 @@ export default class IDBStore extends DBModel {
                 data.id = getLargerID(lastItemID) + data.id;
             }
         }
+        data.updated = new Date().getTime();
         this._data[table].push(data);
 
         const db = await this.getDB();
@@ -155,6 +156,7 @@ export default class IDBStore extends DBModel {
                 data.id = getSmallerID(firstItemID) + data.id;
             }
         }
+        data.updated = new Date().getTime();
         this._data[table].unshift(data);
 
         const db = await this.getDB();
@@ -174,6 +176,7 @@ export default class IDBStore extends DBModel {
         if (idx === -1) return null;
 
         items[idx] = data;
+        items[idx].updated = new Date().getTime();
         const updatedItem = items[idx];
 
         const db = await this.getDB();

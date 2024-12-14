@@ -1,3 +1,4 @@
+"use client";
 export interface IDBData {
     id: string,
     [key: string]: string | number | boolean | undefined
