@@ -165,12 +165,15 @@ export default class IDBStore extends DBModel {
         return this._data[table][0];
     }
 
-    async update(id: string, table: string): Promise<IDBData | null> {
+    async update(data: IDBData, table: string): Promise<IDBData | null> {
+        const id = data.id;
+        if (!id) return null;
         const items = this._data[table];
         if (!items) return null;
         const idx = items.findIndex((d) => d.id === id);
         if (idx === -1) return null;
 
+        items[idx] = data;
         const updatedItem = items[idx];
 
         const db = await this.getDB();

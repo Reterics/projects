@@ -44,7 +44,7 @@ export default abstract class DBModel {
         return this._data[table]?.find(callback);
     }
 
-    abstract update(id: string, table: string): Promise<IDBData|null>;
+    abstract update(data: IDBData, table: string): Promise<IDBData|null>;
     abstract remove(id: string, table: string): Promise<IDBData|null>;
 
     abstract push(data: IDBData, table: string): Promise<IDBData>;

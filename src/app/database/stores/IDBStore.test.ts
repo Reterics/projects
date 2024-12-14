@@ -70,11 +70,7 @@ describe("IDBStore", () => {
         const userData = { id: "user1", name: "John Doe", active: true };
         await store.push(userData, "users");
 
-        // Update in-memory
-        const user = store.get("user1", "users");
-        if (user) user.name = "John Smith";
-
-        await store.update("user1", "users");
+        await store.update({ id: "user1", name: "John Smith", active: true }, "users");
 
         const updatedUser = store.get("user1", "users");
         expect(updatedUser?.name).toBe("John Smith");

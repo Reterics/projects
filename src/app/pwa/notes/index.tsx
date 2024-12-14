@@ -7,13 +7,28 @@ import TableRow from '@tiptap/extension-table-row'
 import TableCell from '@tiptap/extension-table-cell'
 import {Editor} from "@tiptap/core";
 import './style.scss';
+import IDBStore from "@/app/database/stores/IDBStore.ts";
+import {useEffect, useRef, useState} from "react";
+import {IDBData} from "@/app/database/DBModel.ts";
+import { Toast } from 'primereact/toast';
 
-export interface NoteProps {
+export interface NoteType extends IDBData {
     content: string
+    name: string
+    excerpt?: string
 }
 
 export interface NoteMenuProps {
     editor: Editor | null
+    saveNoteAction: (html: string, text: string) => void
+}
+
+export const getEmptyNote = (): NoteType => {
+    return {
+        id: new Date().getTime().toString(),
+        content: '<p><strong>Title</strong></p><p>Start editing...</p>',
+        name: '',
+    }
 }
 
 export const tableHTML = `
@@ -41,7 +56,7 @@ export const tableHTML = `
   </table>
 `
 
-export function NoteMenu({ editor }: Readonly<NoteMenuProps>) {
+export function NoteMenu({ editor, saveNoteAction }: Readonly<NoteMenuProps>) {
     if (!editor) return null;
 
     const buttonClass = (isActive?: boolean, icon?:boolean) => {
@@ -55,6 +70,10 @@ export function NoteMenu({ editor }: Readonly<NoteMenuProps>) {
 
     return (
         <div className="w-full flex flex-row flex-wrap">
+            <button
+                className={buttonClass(false, true) + " pi pi-save border-r-2 border-r-gray-200"}
+                onClick={() => saveNoteAction(editor?.getHTML(), editor?.getText())}>
+            </button>
             <button
                 className={buttonClass(false, true) + " pi pi-undo"}
                 onClick={() => editor.chain().focus().undo().run()}>
@@ -166,7 +185,29 @@ export function NoteMenu({ editor }: Readonly<NoteMenuProps>) {
     )
 }
 
-export default function Notes({content}: Readonly<NoteProps>) {
+export function NoteBrowser({notes, setNoteAction}: Readonly<{ notes: NoteType[], setNoteAction: (note: NoteType) => void }>) {
+    return <div className='flex flex-col min-w-32 border border-gray-400 p-1'>
+        <button
+            key={"note_null"}
+            className='w-full p-1 border-b-2 border-gray-400'
+            onClick={() => setNoteAction(getEmptyNote())}
+        >Add</button>
+        {notes.map((note) =>
+            <button
+                key={"note_" + note.id}
+                className='w-full p-1 border-b-2 border-gray-200'
+                onClick={() => setNoteAction(note)}
+            >
+                <div className="text-left font-semibold">{note.name}</div>
+                <div className="ps-2">{note.excerpt ?? note.content.split('</p>')[0]
+                    .replace(/<p>/g, '')
+                    .substring(0, 10)}...</div>
+            </button>
+        )}
+    </div>;
+}
+
+export function NoteEditor({note, saveNoteAction}: Readonly<{ note: NoteType, saveNoteAction: (note: NoteType) => void }>) {
     const editor = useEditor({
         extensions: [
             StarterKit,
@@ -177,7 +218,7 @@ export default function Notes({content}: Readonly<NoteProps>) {
             TableRow,
             TableCell
         ],
-        content: content,
+        // content: note.content,
         editorProps: {
             attributes: {
                 spellcheck: 'false',
@@ -185,9 +226,60 @@ export default function Notes({content}: Readonly<NoteProps>) {
         },
     })
 
+    useEffect(()=> {
+        if (editor) {
+            editor.commands.setContent(note.content);
+        }
+    }, [editor, note]);
+
     return <div className='flex flex-col h-full p-1'>
-        <NoteMenu editor={editor}/>
+        <NoteMenu editor={editor} saveNoteAction={(html: string, text)=> {
+            note.content = html;
+            const lineBreak = text.indexOf("\n");
+            note.name = text.substring(0, lineBreak <= 1 ? 10 : lineBreak);
+            note.excerpt = text.substring(lineBreak <= 1 ? 10 : lineBreak, 10)
+            saveNoteAction(note)
+        }}/>
         <EditorContent editor={editor} className='h-full'/>
+    </div>
+}
+
+export default function Notes() {
+    const [notes, setNotes] = useState<NoteType[]>([]);
+    const [note, setNote] = useState<NoteType>(getEmptyNote());
+    const store = useRef(new IDBStore({
+        tables: ['notes']
+    }));
+    const toast = useRef<Toast|null>(null);
+
+    useEffect(() => {
+        if(store.current) {
+            store.current.load().then(()=> {
+                setNotes(store.current.getAll('notes').toReversed() as NoteType[])
+            })
+        }
+    }, []);
+
+    const saveNoteAction = async (note: NoteType) => {
+        if (!store.current) {
+            throw new Error('IDBStore is undefined');
+        }
+
+        if (store.current.get(note.id, 'notes')) {
+            await store.current.update(note, 'notes');
+        } else {
+            await store.current.push(note, 'notes');
+        }
+        console.error(store.current.getAll('notes').toReversed())
+        setNotes(store.current.getAll('notes').toReversed() as NoteType[]);
+
+        toast.current?.show({ severity: 'info', summary: 'Info', detail: 'Note Saved' });
+    }
+
+    return <div className='flex flex-row h-full'>
+        <NoteBrowser notes={notes} setNoteAction={setNote}></NoteBrowser>
+        <NoteEditor note={note} saveNoteAction={saveNoteAction}></NoteEditor>
+        <Toast ref={toast} />
     </div>
 }
 
