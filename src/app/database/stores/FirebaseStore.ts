@@ -95,27 +95,27 @@ export class FirebaseStore extends DBModel {
         return this._data;
     }
 
-    async syncData(data: IDBCollection): Promise<void> {
+    async syncData(data: IDBCollection): Promise<IDBCollection> {
         if (!this._firestore) {
             throw new Error("Firebase firestore does not exist due to activation error");
         }
 
+        const received: IDBCollection = {};
         const batch = writeBatch(this._firestore);
-console.log(this._tables);
         for (const table of this._tables) {
             const dataToSync = data[table] ?? [];
             const dbData = this._data[table] ?? [];
-console.log('dataToD', dataToSync, data[table]);
-            dataToSync.forEach((_doc) => {
+            const discoveredIndexes = new Set<number>
+            for (const _doc of dataToSync) {
                 const dbDocIndex = dbData.findIndex(d=>d.id === _doc.id);
+                discoveredIndexes.add(dbDocIndex);
                 const dbDoc = dbData[dbDocIndex]
                 if (!dbDoc || !dbDoc.updated || Number(dbDoc.updated) < Number(_doc.updated)) {
-                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                    // @ts-expect-error
                     const modelRef = doc(this._firestore, table, _doc.id);
                     _doc.updated = new Date().getTime();
+
+                    await DBModel.encryptDoc(_doc);
                     batch.set(modelRef, _doc, { merge: true });
-                    console.log('Batch added');
                 }
 
                 if (!dbDoc) {
@@ -123,10 +123,18 @@ console.log('dataToD', dataToSync, data[table]);
                 } else {
                     dbData[dbDocIndex] = _doc;
                 }
-            })
+            }
+
+            for (let i = 0; i < dbData.length; i++) {
+                if (!discoveredIndexes.has(i)) {
+                    if (received[table]) received[table] = [];
+                    received[table]?.push(await DBModel.decryptDoc(dbData[i]));
+                }
+            }
         }
 
         await batch.commit();
+        return received;
     }
 
     /**
@@ -159,6 +167,7 @@ console.log('dataToD', dataToSync, data[table]);
 
         this._data[table][idx] = data;
         this._data[table][idx].updated = new Date().getTime();
+        await DBModel.encryptDoc(this._data[table][idx]);
 
         const modelRef = doc(collection(this._firestore, table));
 
@@ -192,6 +201,7 @@ console.log('dataToD', dataToSync, data[table]);
         if (data?.id) {
             await this.update(data, table);
         } else {
+            await DBModel.encryptDoc(data);
             const colRef = collection(this._firestore, table);
             await addDoc(colRef, data).catch(e => {
                 console.error(e);

@@ -9,7 +9,7 @@ import {Editor} from "@tiptap/core";
 import './style.scss';
 import IDBStore from "@/app/database/stores/IDBStore.ts";
 import {useEffect, useRef, useState} from "react";
-import {IDBData} from "@/app/database/DBModel.ts";
+import {IDBCollection, IDBData} from "@/app/database/DBModel.ts";
 import { Toast } from 'primereact/toast';
 import {FirebaseStore} from "@/app/database/stores/FirebaseStore.ts";
 
@@ -316,10 +316,16 @@ export default function Notes() {
         if (!store.current) {
             throw new Error('IDBStore is undefined');
         }
-        await fireStore.current.load();
-        await fireStore.current.syncData({
-            notes: store.current.getAll('notes')
+        await fireStore.current?.load();
+        const receivedData = await fireStore.current?.syncData({
+            notes: store.current.getAll('notes').map(n => ({...n}))
         });
+
+        if (receivedData?.notes) {
+            for (const note1 of receivedData?.notes as NoteType[]) {
+                await store.current.push(note1, 'notes')
+            }
+        }
 
         toast.current?.show({ severity: 'info', summary: 'Info', detail: 'Data synced with Firestore' });
     }

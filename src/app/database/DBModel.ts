@@ -1,4 +1,6 @@
 "use client";
+import {decryptData, encryptData, EncryptedData} from "@/app/utils/crypto.ts";
+
 export interface IDBData {
     id: string,
     [key: string]: string | number | boolean | undefined
@@ -50,4 +52,23 @@ export default abstract class DBModel {
 
     abstract push(data: IDBData, table: string): Promise<IDBData>;
     abstract unshift(data: IDBData, table: string): Promise<IDBData>;
+
+
+    static async encryptDoc(doc: IDBData) {
+        if (doc.content && typeof doc.content === 'string') {
+            const {encrypted, salt, iv} = await encryptData(doc.content);
+            delete doc.content;
+            doc.encrypted = encrypted;
+            doc.salt = salt;
+            doc.iv = iv;
+        }
+        return doc
+    }
+
+    static async decryptDoc(doc: IDBData) {
+        if (doc.encrypted) {
+            doc.content = await decryptData(doc as unknown as EncryptedData);
+        }
+        return doc;
+    }
 }
