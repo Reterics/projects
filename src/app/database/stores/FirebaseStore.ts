@@ -54,23 +54,11 @@ export class FirebaseStore extends DBModel {
         return this._ready;
     }
 
-    getLatestTime(table: string) {
-        const data = this._data[table] ?? [];
-        let after = 0;
-        data.forEach(data => {
-            const updated = Number(data.updated);
-            if (!Number.isNaN(updated) && updated > after) {
-                after = updated;
-            }
-        });
-        return after;
-    }
-
     async load(): Promise<IDBCollection> {
         if (!this._firestore) {
             throw new Error("Firebase firestore does not exist due to activation error");
         }
-        for (const table in this._tables) {
+        for (const table of this._tables) {
             const receivedData = this._data[table] ?? [];
             const after = this.getLatestTime(table);
 
@@ -80,61 +68,20 @@ export class FirebaseStore extends DBModel {
 
             const querySnapshot = await getDocs(q);
 
-            querySnapshot.forEach((doc) => {
-                const indexOf = receivedData.findIndex(data => data.id === doc.id);
-                const data = doc.data()
+            for (const doc1 of querySnapshot.docs) {
+                const indexOf = receivedData.findIndex(data => data.id === doc1.id);
+                const data = {...doc1.data(), id: doc1.id} as IDBData;
+
                 if (data && !data.deleted) {
                     if (indexOf !== -1) {
-                        receivedData[indexOf] = {...data, id: doc.id}
+                        receivedData[indexOf] = await DBModel.decryptDoc(data)
                     } else {
-                        receivedData.push({...data, id: doc.id});
+                        receivedData.push(await DBModel.decryptDoc(data));
                     }
                 }
-            });
+            }
         }
         return this._data;
-    }
-
-    async syncData(data: IDBCollection): Promise<IDBCollection> {
-        if (!this._firestore) {
-            throw new Error("Firebase firestore does not exist due to activation error");
-        }
-
-        const received: IDBCollection = {};
-        const batch = writeBatch(this._firestore);
-        for (const table of this._tables) {
-            const dataToSync = data[table] ?? [];
-            const dbData = this._data[table] ?? [];
-            const discoveredIndexes = new Set<number>
-            for (const _doc of dataToSync) {
-                const dbDocIndex = dbData.findIndex(d=>d.id === _doc.id);
-                discoveredIndexes.add(dbDocIndex);
-                const dbDoc = dbData[dbDocIndex]
-                if (!dbDoc || !dbDoc.updated || Number(dbDoc.updated) < Number(_doc.updated)) {
-                    const modelRef = doc(this._firestore, table, _doc.id);
-                    _doc.updated = new Date().getTime();
-
-                    await DBModel.encryptDoc(_doc);
-                    batch.set(modelRef, _doc, { merge: true });
-                }
-
-                if (!dbDoc) {
-                    this._data[table]?.push(_doc);
-                } else {
-                    dbData[dbDocIndex] = _doc;
-                }
-            }
-
-            for (let i = 0; i < dbData.length; i++) {
-                if (!discoveredIndexes.has(i)) {
-                    if (received[table]) received[table] = [];
-                    received[table]?.push(await DBModel.decryptDoc(dbData[i]));
-                }
-            }
-        }
-
-        await batch.commit();
-        return received;
     }
 
     /**
@@ -218,5 +165,42 @@ export class FirebaseStore extends DBModel {
      */
     async unshift(data: IDBData, table: string): Promise<IDBData> {
         return this.push(data, table);
+    }
+
+    async batch (dataToAdd: IDBData[], dataToUpdate: IDBData[], dataToRemove: IDBData[], table: string) {
+        if (!this._firestore) {
+            throw new Error("Firebase firestore does not exist due to activation error");
+        }
+        const batch = writeBatch(this._firestore);
+        const dbData = this._data[table] ?? [];
+
+        let commits = 0;
+        for (const data of dataToAdd.concat(dataToUpdate)) {
+            const modelRef = doc(this._firestore, table, data.id);
+            data.updated = new Date().getTime();
+            await DBModel.encryptDoc(data);
+            batch.set(modelRef, data, { merge: true });
+            commits++;
+            const dbDocIndex = dbData.findIndex(d => d.id === data.id);
+            if (dbDocIndex !== -1) {
+                dbData[dbDocIndex] = data;
+            } else {
+                dbData.push(data)
+            }
+        }
+
+        for (const data of dataToRemove) {
+            const index = dbData.findIndex(d => d.id === data.id);
+            if (index !== -1) {
+                dbData.splice(index, 1);
+            }
+            const modelRef = doc(this._firestore, table, data.id);
+            batch.delete(modelRef);
+            commits++;
+        }
+
+        if (commits) {
+            await batch.commit();
+        }
     }
 }

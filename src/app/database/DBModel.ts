@@ -3,6 +3,7 @@ import {decryptData, encryptData, EncryptedData} from "@/app/utils/crypto.ts";
 
 export interface IDBData {
     id: string,
+    updated: number | string,
     [key: string]: string | number | boolean | undefined
 }
 
@@ -68,7 +69,67 @@ export default abstract class DBModel {
     static async decryptDoc(doc: IDBData) {
         if (doc.encrypted) {
             doc.content = await decryptData(doc as unknown as EncryptedData);
+            if (doc.content) {
+                delete doc.iv;
+                delete doc.salt;
+                delete doc.encrypted;
+            }
         }
         return doc;
+    }
+
+    getLatestTime(table: string) {
+        const data = this._data[table] ?? [];
+        let after = 0;
+        data.forEach(data => {
+            const updated = Number(data.updated);
+            if (!Number.isNaN(updated) && updated > after) {
+                after = updated;
+            }
+        });
+        return after;
+    }
+
+    async batch (dataToAdd: IDBData[], dataToUpdate: IDBData[], dataToRemove: IDBData[], table: string) {
+        for (const data of dataToAdd) {
+            await this.push(data, table)
+        }
+        for (const data of dataToUpdate) {
+            await this.update(data, table)
+        }
+        for (const data of dataToRemove) {
+            await this.remove(data.id, table)
+        }
+    }
+
+    static async sync(models: DBModel[], table: string) {
+        const buffer = new Map<string, IDBData>();
+
+        // Gather all data in buffer
+        for (const entry of models.map(m => m.getAll(table)).flat()) {
+            if (!buffer.has(entry.id) ||
+                Number(buffer.get(entry.id)?.updated) < Number(entry.updated)) {
+                buffer.set(entry.id, entry);
+            }
+        }
+
+        // Check model data against buffer
+        for (const model of models) {
+            const dataToAdd: IDBData[] = [];
+            const dataToUpdate: IDBData[] = [];
+            const dataToRemove: IDBData[] = [];
+            for (const [id, entry] of buffer) {
+                if (entry.deleted) {
+                    dataToRemove.push(entry);
+                }
+                const modelData = model.get(id, table);
+                if (!modelData) {
+                    dataToAdd.push(entry);
+                } else if (Number(entry?.updated) > Number(modelData?.updated)) {
+                    dataToUpdate.push(entry);
+                }
+            }
+            await model.batch(dataToAdd, dataToUpdate, dataToRemove, table)
+        }
     }
 }

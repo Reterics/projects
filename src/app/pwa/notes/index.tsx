@@ -9,7 +9,7 @@ import {Editor} from "@tiptap/core";
 import './style.scss';
 import IDBStore from "@/app/database/stores/IDBStore.ts";
 import {useEffect, useRef, useState} from "react";
-import {IDBCollection, IDBData} from "@/app/database/DBModel.ts";
+import DBModel, {IDBData} from "@/app/database/DBModel.ts";
 import { Toast } from 'primereact/toast';
 import {FirebaseStore} from "@/app/database/stores/FirebaseStore.ts";
 
@@ -29,6 +29,7 @@ export const getEmptyNote = (): NoteType => {
         id: new Date().getTime().toString(),
         content: '<p><strong>Title</strong></p><p>Start editing...</p>',
         name: '',
+        updated: new Date().getTime()
     }
 }
 
@@ -317,15 +318,8 @@ export default function Notes() {
             throw new Error('IDBStore is undefined');
         }
         await fireStore.current?.load();
-        const receivedData = await fireStore.current?.syncData({
-            notes: store.current.getAll('notes').map(n => ({...n}))
-        });
-
-        if (receivedData?.notes) {
-            for (const note1 of receivedData?.notes as NoteType[]) {
-                await store.current.push(note1, 'notes')
-            }
-        }
+        await DBModel.sync([store.current, fireStore.current], 'notes');
+        setNotes(store.current?.getAll('notes').toReversed() as NoteType[]);
 
         toast.current?.show({ severity: 'info', summary: 'Info', detail: 'Data synced with Firestore' });
     }

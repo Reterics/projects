@@ -189,7 +189,7 @@ export default function Home() {
                                 visible={app.show} breakpoints={{'960px': '60vw', '600px': '75vw'}}
                                 resizable={true}
                                 modal={false}
-                                style={{width: '50vw'}}
+                                style={{width: '50vw', height: '40vh'}}
                                 onHide={() => app.onClose && app.onClose()}
                                 maximizable
                                 closeIcon={<i className="pi pi-sort-down-fill"/>}
