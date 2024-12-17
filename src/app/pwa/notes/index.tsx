@@ -10,11 +10,11 @@ import './style.scss';
 import IDBStore from "@/app/database/stores/IDBStore.ts";
 import {useEffect, useRef, useState} from "react";
 import DBModel, {IDBData} from "@/app/database/DBModel.ts";
-import { Toast } from 'primereact/toast';
+import { toast } from 'react-toastify';
 import {FirebaseStore} from "@/app/database/stores/FirebaseStore.ts";
 
 export interface NoteType extends IDBData {
-    content: string
+    content?: string
     name: string
     excerpt?: string
 }
@@ -205,7 +205,7 @@ export function NoteBrowser({notes, setNoteAction, syncNotesAction}: Readonly<{ 
                     onClick={() => setNoteAction(note)}
                 >
                     <div className="text-left font-semibold">{note.name}</div>
-                    <div className="ps-2">{note.excerpt ?? note.content.split('</p>')[0]
+                    <div className="ps-2">{note.excerpt ?? note.content?.split('</p>')[0]
                         .replace(/<p>/g, '')
                         .substring(0, 10)}...</div>
                 </button>
@@ -249,7 +249,7 @@ export function NoteEditor({note, saveNoteAction}: Readonly<{
     })
 
     useEffect(()=> {
-        if (editor) {
+        if (editor && note.content) {
             editor.commands.setContent(note.content);
         }
     }, [editor, note]);
@@ -271,21 +271,20 @@ export default function Notes() {
     const [notes, setNotes] = useState<NoteType[]>([]);
     const [note, setNote] = useState<NoteType>(getEmptyNote());
 
-    const store = useRef<IDBStore>();
+    const store = useRef<IDBStore|null>(null);
     if (!store.current) {
         store.current = new IDBStore({
             tables: ['notes']
         })
     }
 
-    const fireStore = useRef<FirebaseStore>();
+    const fireStore = useRef<FirebaseStore|null>(null);
     if (!fireStore.current) {
         fireStore.current = new FirebaseStore({
             tables: ['notes']
         })
     }
 
-    const toast = useRef<Toast|null>(null);
 
     useEffect(() => {
         if(store.current) {
@@ -307,7 +306,7 @@ export default function Notes() {
         }
         setNotes(store.current.getAll('notes').toReversed() as NoteType[]);
 
-        toast.current?.show({ severity: 'info', summary: 'Info', detail: 'Note Saved' });
+        toast('Note Saved');
     }
 
     const syncNotesAction = async () => {
@@ -321,13 +320,12 @@ export default function Notes() {
         await DBModel.sync([store.current, fireStore.current], 'notes');
         setNotes(store.current?.getAll('notes').toReversed() as NoteType[]);
 
-        toast.current?.show({ severity: 'info', summary: 'Info', detail: 'Data synced with Firestore' });
+        toast('Data synced with Firestore');
     }
 
     return <div className='flex flex-row h-full'>
         <NoteBrowser notes={notes} setNoteAction={setNote} syncNotesAction={syncNotesAction}></NoteBrowser>
         <NoteEditor note={note} saveNoteAction={saveNoteAction}></NoteEditor>
-        <Toast ref={toast} />
     </div>
 }
 

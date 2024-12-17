@@ -1,18 +1,11 @@
 'use client';
-import React, {useRef, useState} from 'react';
-import { Tooltip } from 'primereact/tooltip';
-import { Dialog } from 'primereact/dialog';
-import { Toast } from 'primereact/toast';
-import { Menubar } from 'primereact/menubar';
-import {MenuItem} from 'primereact/menuitem';
-import Image from 'next/image'
-import logoDark from './assets/logo_thick.png';
+import React, {useState} from 'react';
+import Dialog from './components/Dialog';
+import { ToastContainer } from 'react-toastify';
 import './page.css';
-import {getCurrentTime} from "@/app/utils/common";
-import {Dock} from "primereact/dock";
 import PTerminal from "@/app/pwa/pTerminal";
-import PWA from "@/app/pwa/pwa";
 import Notes from "@/app/pwa/notes/index";
+import MenuBar, {MenuBarItem} from "@/app/components/MenuBar.tsx";
 
 export interface RunningApp {
     id: string;
@@ -29,8 +22,6 @@ export interface RunningApp {
 
 export default function Home() {
     const [apps, setApps] = useState<RunningApp[]>([]);
-    const toast = useRef<Toast>(null);
-    const toast2 = useRef<Toast>(null);
 
     const focusAppById = (id: string)=> {
         let dialogNode: HTMLElement|null = null;
@@ -81,7 +72,7 @@ export default function Home() {
         )
     };
 
-    const menubarItems: MenuItem[] = [
+    const menubarItems: MenuBarItem[] = [
         {
             label: 'Home',
             className: 'menubar-root'
@@ -130,70 +121,25 @@ export default function Home() {
                     }
                 },
                 {
-                    label: 'NAS',
-                    icon: 'pi pi-desktop',
-
-                    command() {
-                        const id = new Date().getTime().toString()
-                        setApps((prevApps) => {
-                            return [...prevApps, {
-                                id,
-                                label: 'NAS',
-                                icon: getDockIcon('pi-desktop', id),
-                                show: true,
-                                focus: () => focusAppById(id),
-                                command: () => focusAppById(id),
-                                onClose: () => hideAppById(id),
-                                entry: <PWA src='https://reterics.synology.me:5001/' title='NAS'/>
-                            }];
-                        })
-                    }
-                },
-                {
                     separator: true
-                },
-                {
-                    label: 'Install',
-                    icon: 'pi pi-fw pi-plus'
                 }
             ]
         }
     ];
 
-    const start = <Image src={logoDark} alt={'Logo'} width={18} height={18}/>;
-    const end = (
-        <React.Fragment>
-            <i className="pi pi-search"/>
-            <span>{getCurrentTime()}</span>
-        </React.Fragment>
-    );
-
-
-
     return (
         <div className="system-outer w-dvw h-dvh flex flex-col">
-            <Tooltip className="dark-tooltip" target=".dock-advanced .p-dock-action" my="center+15 bottom-15"
-                     at="center top" showDelay={150}/>
-            <Menubar model={menubarItems} start={start} end={end}/>
+            <MenuBar model={menubarItems}/>
             <div className="dock-window dock-advanced flex flex-1">
-                <Toast ref={toast}/>
-                <Toast ref={toast2} position="top-center"/>
-                <Dock model={apps}></Dock>
+                <ToastContainer />
+
                 {apps
                     .map((app, index)=>
                         <Dialog key={'app_' + app.id + '_' + index}
-                                id={'app_' + app.id}
-                                header={<button className="text-lg" onClick={()=> app.focus?.()}>{app.label}</button>}
-                                draggable={true}
-                                className="terminal-dialog running-app-dialog"
-                                visible={app.show} breakpoints={{'960px': '60vw', '600px': '75vw'}}
-                                resizable={true}
-                                modal={false}
-                                style={{width: '50vw', height: '40vh'}}
-                                onHide={() => app.onClose && app.onClose()}
-                                maximizable
-                                closeIcon={<i className="pi pi-sort-down-fill"/>}
-                                blockScroll={false}>
+                                initialWidth={window.innerWidth / 2}
+                                initialHeight={window.innerHeight * 0.4}
+                                onClose={() => setApps((prevApps) => prevApps.filter(a => a !== app))}
+                                >
                             {app.entry}
                         </Dialog>
                 )}

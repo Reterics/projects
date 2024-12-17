@@ -1,5 +1,5 @@
 @import "flags.css";
-@layer tailwind-base, primereact, tailwind-utilities;
+@layer tailwind-base, tailwind-utilities;
 
 @layer tailwind-base {
     @tailwind base;

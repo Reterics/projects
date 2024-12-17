@@ -1,6 +1,5 @@
 import './globals.css';
 import Providers from '@/app/providers';
-import 'primereact/resources/themes/nano/theme.css';
 
 export default function RootLayout({
     children,
