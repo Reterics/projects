@@ -8,7 +8,7 @@ export default function RootLayout({
 }>) {
     return (
         <html lang='en' suppressHydrationWarning>
-            <body className="w-dvw h-dvh m-0 p-0 block">
+            <body className="w-dvw h-dvh m-0 p-0 block overflow-hidden">
                 <Providers>{children}</Providers>
             </body>
         </html>

@@ -61,7 +61,7 @@ export default function MenuBar ({model}: MenuBarProps) {
     return (
         <nav
             ref={outsideRef}
-            className="fixed top-0 left-0 w-full h-8 bg-zinc-100 text-zinc-900 flex items-center justify-between px-4 z-50 border-b border-zinc-300"
+            className="top-0 left-0 w-full h-8 bg-zinc-100 text-zinc-900 flex items-center justify-between px-4 z-50 border-b border-zinc-300"
         >
             <div className="flex items-center space-x-4">
                 <Image src={logoDark} alt={'Logo'} width={18} height={18}/>

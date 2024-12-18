@@ -128,9 +128,9 @@ export default function Home() {
     ];
 
     return (
-        <div className="system-outer w-dvw h-dvh flex flex-col">
+        <div className="system-outer w-full h-full flex flex-col">
             <MenuBar model={menubarItems}/>
-            <div className="dock-window dock-advanced flex flex-1">
+            <div className="dock-window flex flex-1">
                 <ToastContainer />
 
                 {apps

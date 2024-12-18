@@ -1,5 +1,6 @@
-import React, {useRef, useState} from 'react';
+import React, {useCallback, useRef, useState} from 'react';
 import { Resizable } from 're-resizable';
+import DraggableDiv from "@/app/components/DraggableDiv.tsx";
 
 export interface DialogProps {
     title?: string
@@ -19,6 +20,26 @@ export default function Dialog({
     const [width, setWidth] = useState(initialWidth);
     const [height, setHeight] = useState(initialHeight);
     const dialogRef = useRef<HTMLDivElement>(null);
+    const posRef = useRef<{ x: number, y: number }>({ x: 0, y: 0 });
+    const previous = useRef<{
+        position: { x: number, y: number },
+        width: number,
+        height: number
+    }>({
+        position: posRef.current,
+        width: width,
+        height: height
+    });
+
+    const updatePrevious = useCallback(() => {
+        if (previous.current) {
+            previous.current = {
+                position: posRef.current,
+                width: width,
+                height: height
+            };
+        }
+    }, [height, width])
 
     const titleBarClasses = `
     flex items-center justify-between
@@ -48,12 +69,17 @@ export default function Dialog({
     const isMinimized = height < 33 && width < 151;
 
     return (
-        <div ref={dialogRef}>
+        <DraggableDiv ref={dialogRef} pos={posRef} handle='.title-bar'>
             <div
                 style={{ width: width, height: height }}
-                className="absolute top-10 left-10 z-40"
+                className="absolute z-40"
             >
                 <Resizable
+                    enable={{
+                        bottom: true,
+                        bottomRight: true,
+                        right: true,
+                    }}
                     size={{ width: width, height: height }}
                     onResizeStop={(e, direction, ref, d) => {
                         setHeight(height + d.height)
@@ -67,6 +93,7 @@ export default function Dialog({
                             </div>
                             <div className="flex items-center">
                                 {!isMinimized && <button className={controlButtonClasses} onClick={() => {
+                                    updatePrevious();
                                     setHeight(32);
                                     setWidth(150);
                                 }} title="Minimize">
@@ -75,8 +102,24 @@ export default function Dialog({
                                 <button className={controlButtonClasses} onClick={() => {
                                     const parent = dialogRef.current?.parentElement;
                                     if (parent) {
-                                        setHeight(parent.offsetHeight);
-                                        setWidth(parent.offsetWidth);
+                                        if (parent.offsetHeight === height && parent.offsetWidth === width) {
+                                            setHeight(previous.current.height);
+                                            setWidth(previous.current.width);
+                                            if (posRef.current) {
+                                                posRef.current.x = previous.current.position.x;
+                                                posRef.current.y = previous.current.position.y;
+                                            }
+                                        } else {
+                                            updatePrevious();
+
+                                            setHeight(parent.offsetHeight);
+                                            setWidth(parent.offsetWidth);
+                                            if (posRef.current) {
+                                                posRef.current.x = 0;
+                                                posRef.current.y = 0;
+                                            }
+                                        }
+
                                     }
                                 }} title="Maximize">
                                     <div className="w-3 h-3 border border-gray-800 bg-green-400"/>
@@ -95,6 +138,6 @@ export default function Dialog({
                     </div>
                 </Resizable>
             </div>
-        </div>
+        </DraggableDiv>
     );
 }
