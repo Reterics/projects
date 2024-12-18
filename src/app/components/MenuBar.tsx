@@ -4,7 +4,7 @@ import Image from "next/image";
 
 export interface MenuBarItem {
     label?: string
-    icon?: string
+    icon?: React.ReactNode
     command?: () => void
     separator?: boolean
     items?: MenuBarItem[]
@@ -90,7 +90,7 @@ export default function MenuBar ({model}: MenuBarProps) {
                                     item.className || ''
                                 }`}
                             >
-                                {item.icon && <i className={`${item.icon} mr-2`}></i>}
+                                {item.icon}
                                 {item.label}
                             </button>
                             {hasDropdown && openDropdown === item.label && (
@@ -109,11 +109,9 @@ export default function MenuBar ({model}: MenuBarProps) {
                                                 <li
                                                     key={subItem.label || index}
                                                     onClick={() => handleMenuClick(subItem)}
-                                                    className="hover:bg-zinc-200 px-2 py-1 cursor-pointer text-sm flex items-center"
+                                                    className="hover:bg-zinc-200 px-2 pt-2 pb-1 cursor-pointer text-sm flex items-center"
                                                 >
-                                                    {subItem.icon && (
-                                                        <i className={`${subItem.icon} mr-2 text-zinc-700`}></i>
-                                                    )}
+                                                    {subItem.icon ? <div className='pe-1'>{subItem.icon}</div> : undefined}
                                                     {subItem.label}
                                                 </li>
                                             );

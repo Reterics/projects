@@ -1,6 +1,7 @@
 import React, {useCallback, useRef, useState} from 'react';
 import { Resizable } from 're-resizable';
 import DraggableDiv from "@/app/components/DraggableDiv.tsx";
+import { BsCopy, BsDashLg, BsSquare, BsXLg} from "react-icons/bs";
 
 export interface DialogProps {
     title?: string
@@ -45,7 +46,6 @@ export default function Dialog({
     flex items-center justify-between
     bg-gradient-to-r from-gray-300 to-gray-100
     border-b border-gray-300
-    p-1
     cursor-move
     select-none
   `;
@@ -58,15 +58,25 @@ export default function Dialog({
     flex flex-col
   `;
 
-    const controlButtonClasses = `
-    w-5 h-5 flex items-center justify-center
-    border border-gray-400
+    const minimizeButtonClasses = `
+    w-6 h-6 flex items-end justify-center
     hover:bg-gray-200
-    cursor-pointer
-    ml-1
+    cursor-pointer p-1
+  `;
+    const maximizeButtonClasses = `
+    w-6 h-6 flex items-center justify-center
+    hover:bg-gray-200
+    cursor-pointer p-1.5
+  `;
+    const controlButtonClasses = `
+    w-6 h-6 flex items-center justify-center
+    hover:bg-gray-200
+    cursor-pointer p-1
   `;
 
+    const parent = dialogRef.current?.parentElement;
     const isMinimized = height < 33 && width < 151;
+    const isMaximized = parent && parent.offsetHeight === height && parent.offsetWidth === width;
 
     return (
         <DraggableDiv ref={dialogRef} pos={posRef} handle='.title-bar'>
@@ -92,14 +102,24 @@ export default function Dialog({
                                 <span className="font-bold text-sm">{title}</span>
                             </div>
                             <div className="flex items-center">
-                                {!isMinimized && <button className={controlButtonClasses} onClick={() => {
-                                    updatePrevious();
-                                    setHeight(32);
-                                    setWidth(150);
+                                <button className={minimizeButtonClasses} onClick={() => {
+                                    if (isMinimized) {
+                                        setHeight(previous.current.height);
+                                        setWidth(previous.current.width);
+                                        if (posRef.current) {
+                                            posRef.current.x = previous.current.position.x;
+                                            posRef.current.y = previous.current.position.y;
+                                        }
+                                    } else {
+                                        updatePrevious();
+                                        setHeight(32);
+                                        setWidth(150);
+                                    }
                                 }} title="Minimize">
-                                    <div className="w-3 h-3 border border-gray-800 bg-yellow-400"/>
-                                </button>}
-                                <button className={controlButtonClasses} onClick={() => {
+                                    {isMinimized && <BsCopy />}
+                                    {!isMinimized && <BsDashLg />}
+                                </button>
+                                <button className={maximizeButtonClasses} onClick={() => {
                                     const parent = dialogRef.current?.parentElement;
                                     if (parent) {
                                         if (parent.offsetHeight === height && parent.offsetWidth === width) {
@@ -122,10 +142,11 @@ export default function Dialog({
 
                                     }
                                 }} title="Maximize">
-                                    <div className="w-3 h-3 border border-gray-800 bg-green-400"/>
+                                    {isMaximized && <BsCopy />}
+                                    {!isMaximized && <BsSquare />}
                                 </button>
                                 <button className={controlButtonClasses} onClick={onClose} title="Close">
-                                    <div className="w-3 h-3 border border-gray-800 bg-red-500"/>
+                                    <BsXLg />
                                 </button>
                             </div>
                         </div>

@@ -29,8 +29,8 @@ async function deriveKeyPBKDF2Browser(passphrase: string, salt: Uint8Array<Array
     );
 }
 
-export async function encryptData(plainText: string): Promise<EncryptedData> {
-    const passphrase = process.env.NEXT_PUBLIC_PASSPHRASE ?? 'passphrase';
+export async function encryptData(plainText: string, passphrase?: string): Promise<EncryptedData> {
+    passphrase = passphrase ?? process.env.NEXT_PUBLIC_PASSPHRASE ?? 'passphrase';
 
     const encoder = new TextEncoder();
     const salt = crypto.getRandomValues(new Uint8Array(16));
@@ -51,8 +51,8 @@ export async function encryptData(plainText: string): Promise<EncryptedData> {
     };
 }
 
-export async function decryptData(encryptedData: EncryptedData) {
-    const passphrase = process.env.NEXT_PUBLIC_PASSPHRASE ?? 'passphrase';
+export async function decryptData(encryptedData: EncryptedData, passphrase?: string): Promise<string>{
+    passphrase = passphrase ?? process.env.NEXT_PUBLIC_PASSPHRASE ?? 'passphrase';
     const decoder = new TextDecoder();
 
     const encryptedBuffer = Uint8Array.from(atob(encryptedData.encrypted), c => c.charCodeAt(0));

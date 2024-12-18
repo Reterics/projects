@@ -6,12 +6,12 @@ import './page.css';
 import PTerminal from "@/app/pwa/pTerminal";
 import Notes from "@/app/pwa/notes/index";
 import MenuBar, {MenuBarItem} from "@/app/components/MenuBar.tsx";
+import {BsBook, BsCodeSquare} from "react-icons/bs";
 
 export interface RunningApp {
     id: string;
     label: string;
     className?: string;
-    icon: React.ReactNode;
     command?: () => void;
     focus?: () => void;
     show: boolean;
@@ -58,20 +58,6 @@ export default function Home() {
         }
     };
 
-    const getDockIcon = (icon: string, id: string) => {
-
-        return (
-            <div className="bg-white p-4 flex items-center justify-center">
-                <button onClick={(event)=>{
-                    event.preventDefault();
-                    setApps(prevApps => [...prevApps.filter(app => app.id!== id)])
-                }}><i className="absolute top-0 right-0 pi pi-times p-0.5 bg-gray-50"></i></button>
-
-                <i className={"pi " + icon + " text-xl"}/>
-            </div>
-        )
-    };
-
     const menubarItems: MenuBarItem[] = [
         {
             label: 'Home',
@@ -82,7 +68,7 @@ export default function Home() {
             items: [
                 {
                     label: 'Terminal',
-                    icon: 'pi pi-fw pi-code',
+                    icon: <BsCodeSquare/>,
 
                     command() {
                         const id = new Date().getTime().toString()
@@ -90,7 +76,6 @@ export default function Home() {
                             return [...prevApps, {
                                 id,
                                 label: 'Terminal',
-                                icon: getDockIcon('pi-fw pi-code', id),
                                 show: true,
                                 focus: () => focusAppById(id),
                                 command: () => focusAppById(id),
@@ -102,7 +87,7 @@ export default function Home() {
                 },
                 {
                     label: 'Notes',
-                    icon: 'pi pi-book',
+                    icon: <BsBook />,
 
                     command() {
                         const id = new Date().getTime().toString()
@@ -110,7 +95,6 @@ export default function Home() {
                             return [...prevApps, {
                                 id,
                                 label: 'Notes',
-                                icon: getDockIcon('pi pi-book', id),
                                 show: true,
                                 focus: () => focusAppById(id),
                                 command: () => focusAppById(id),

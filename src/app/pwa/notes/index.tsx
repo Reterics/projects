@@ -12,6 +12,18 @@ import {useEffect, useRef, useState} from "react";
 import DBModel, {IDBData} from "@/app/database/DBModel.ts";
 import { toast } from 'react-toastify';
 import {FirebaseStore} from "@/app/database/stores/FirebaseStore.ts";
+import {
+    BsArrow90DegLeft, BsArrow90DegRight, BsArrowRepeat,
+    BsCode,
+    BsCodeSquare, BsFileBreak, BsFloppy, BsHr,
+    BsListOl,
+    BsListUl, BsPlusLg,
+    BsQuote, BsTable, BsTrash, BsType,
+    BsTypeBold, BsTypeH1, BsTypeH2, BsTypeH3, BsTypeH4, BsTypeH5, BsTypeH6,
+    BsTypeItalic,
+    BsTypeStrikethrough
+} from "react-icons/bs";
+import Dropdown from "@/app/components/Dropdown.tsx";
 
 export interface NoteType extends IDBData {
     content?: string
@@ -64,156 +76,168 @@ export function NoteMenu({ editor, saveNoteAction }: Readonly<NoteMenuProps>) {
     const buttonClass = (isActive?: boolean, icon?:boolean) => {
         const textSize = (!icon ? "  text-lg" : "")
         if (!isActive) {
-            return "p-0 px-2 cursor-pointer" + textSize;
+            return "p-2 cursor-pointer hover:bg-gray-200" + textSize;
         } else {
-            return "p-0 px-2 cursor-pointer text-lg font-bold bg-gray-200 border rounded-md" + textSize;
+            return "p-2 cursor-pointer text-lg font-bold bg-gray-200 border rounded-md" + textSize;
         }
     };
 
+    const paragraphOptions = [
+        { value: "paragraph", icon: <BsType />, label: "Paragraph" },
+        { value: "1", icon: <BsTypeH1 />, label: "Heading 1" },
+        { value: "2", icon: <BsTypeH2 />, label: "Heading 2" },
+        { value: "3", icon: <BsTypeH3 />, label: "Heading 3" },
+        { value: "4", icon: <BsTypeH4 />, label: "Heading 4" },
+        { value: "5", icon: <BsTypeH5 />, label: "Heading 5" },
+        { value: "6", icon: <BsTypeH6 />, label: "Heading 6" },
+    ];
+
     return (
-        <div className="w-full flex flex-row flex-wrap">
+        <div className="w-full flex flex-row flex-wrap border-b border-zinc-400">
             <button
-                className={buttonClass(false, true) + " pi pi-save border-r-2 border-r-gray-200"}
+                className={buttonClass(false, true) + " border-r-2 border-r-gray-200"}
                 onClick={() => saveNoteAction(editor?.getHTML(), editor?.getText())}>
-            </button>
-            <button
-                className={buttonClass(false, true) + " pi pi-undo"}
-                onClick={() => editor.chain().focus().undo().run()}>
-
-            </button>
-            <button
-                className={buttonClass(false, true) + " pi pi-refresh border-r-2 border-r-gray-200"}
-                onClick={() => editor.chain().focus().redo().run()}>
-
+                <BsFloppy/>
             </button>
             <button
                 onClick={() => editor.chain().focus().toggleBold().run()}
                 className={buttonClass(editor.isActive('bold'))}
             >
-                B
+                <BsTypeBold/>
             </button>
             <button
                 onClick={() => editor.chain().focus().toggleItalic().run()}
-                className={buttonClass(editor.isActive('italic')) + " italic"}
+                className={buttonClass(editor.isActive('italic'))}
             >
-                I
+                <BsTypeItalic/>
             </button>
             <button
                 onClick={() => editor.chain().focus().toggleStrike().run()}
-                className={buttonClass(editor.isActive('strike')) + " line-through"}
+                className={buttonClass(editor.isActive('strike'))}
             >
-                S
+                <BsTypeStrikethrough/>
             </button>
-            <button
-                onClick={() => editor.chain().focus().toggleCode().run()}
-                className={buttonClass(editor.isActive('code'), true) + " pi pi-code"}
-            >
-            </button>
-            <button
-                onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-                className={buttonClass(editor.isActive('codeBlock'), true) + " pi pi-code border rounded"}
-            >
-            </button>
-            <button
-                onClick={() => editor.chain().focus().toggleBlockquote().run()}
-                className={buttonClass(editor.isActive('blockquote'), true) + " text-2xl mb-[-0.5rem]"}
-            >
-                &#34;
-            </button>
-
+            <Dropdown
+                className={buttonClass(false, true) + " border-r-2 border-r-gray-200"}
+                options={paragraphOptions}
+                value={
+                    editor.isActive('paragraph') ? 'paragraph' : Array.from({length: 6}, (_, i) => i + 1).find((lvl) => editor.isActive('heading', {level: lvl})) ?? ''
+                }
+                onSelect={(value: string | number) => {
+                    if (value === 'paragraph') {
+                        editor.chain().focus().setParagraph().run();
+                    } else {
+                        editor.chain().focus().toggleHeading({level: Number(value) as 1 | 2 | 3 | 4 | 5 | 6}).run();
+                    }
+                }}
+            />
             <button
                 onClick={() => editor.chain().focus().toggleBulletList().run()}
-                className={buttonClass(editor.isActive('bulletList'), true) + " pi pi-list"}
+                className={buttonClass(editor.isActive('bulletList'), true)}
             >
+                <BsListUl/>
             </button>
             <button
                 onClick={() => editor.chain().focus().toggleOrderedList().run()}
-                className={buttonClass(editor.isActive('orderedList'), true) + " pi pi-list-check"}
+                className={buttonClass(editor.isActive('orderedList'), true)}
             >
+                <BsListOl/>
             </button>
+            <button
+                onClick={() => editor.chain().focus().toggleCode().run()}
+                className={buttonClass(editor.isActive('code'), true)}
+            >
+                <BsCode/>
+            </button>
+            <button
+                onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+                className={buttonClass(editor.isActive('codeBlock'), true)}
+            >
+                <BsCodeSquare/>
+            </button>
+            <button
+                onClick={() => editor.chain().focus().toggleBlockquote().run()}
+                className={buttonClass(editor.isActive('blockquote'), true)}
+            >
+                <BsQuote/>
+            </button>
+
+
             <button
                 onClick={() => editor.chain().focus().insertContent(tableHTML, {
                     parseOptions: {
                         preserveWhitespace: false,
                     },
                 }).run()}
-                className={buttonClass(false, true) + " pi pi-table"}
+                className={buttonClass(false, true)}
             >
+                <BsTable/>
             </button>
 
 
-            <select
-                className={buttonClass(false, true)}
-
-                onChange={(e) => {
-                    const value = e.target.value;
-                    if (value === 'paragraph') {
-                        editor.chain().focus().setParagraph().run();
-                    } else {
-                        editor.chain().focus().toggleHeading({level: Number(value) as 1|2|3|4|5|6}).run();
-                    }
-                }}
-                value={
-                    editor.isActive('paragraph') ? 'paragraph' : Array.from({length: 6}, (_, i) => i + 1).find((lvl) => editor.isActive('heading', {level: lvl})) ?? ''
-                }
-            >
-                <option value="paragraph">Paragraph</option>
-                {[...Array(6)].map((_, i) => (
-                    <option key={i + 1} value={i + 1}>{`H${i + 1}`}</option>
-                ))}
-            </select>
             <button
-                className={buttonClass(false, true)}
+                className={buttonClass(false, true) + " border-r-2 border-r-gray-200"}
                 onClick={() => editor.chain().focus().setHorizontalRule().run()}>
-                HR
+                <BsHr/>
+            </button>
+
+            <button
+                className={buttonClass(false, true)}
+                onClick={() => editor.chain().focus().undo().run()}>
+                <BsArrow90DegLeft/>
+
             </button>
             <button
                 className={buttonClass(false, true)}
-                onClick={() => editor.chain().focus().setHardBreak().run()}>
-                BR
-            </button>
-            <button
-                className={buttonClass(false, true) + ' pi pi-eraser'}
-                onClick={() => editor.chain().focus().unsetAllMarks().run()}>
-                marks
-            </button>
-            <button
-                className={buttonClass(false, true) + ' pi pi-eraser'}
+                onClick={() => editor.chain().focus().redo().run()}>
+                <BsArrow90DegRight/>
 
-                onClick={() => editor.chain().focus().clearNodes().run()}>
-                nodes
             </button>
         </div>
     )
 }
 
-export function NoteBrowser({notes, setNoteAction, syncNotesAction}: Readonly<{ notes: NoteType[], setNoteAction: (note: NoteType) => void, syncNotesAction: () => Promise<void> }>) {
+export function NoteBrowser({notes, setNoteAction, syncNotesAction}: Readonly<{
+    notes: NoteType[],
+    setNoteAction: (note: NoteType) => void,
+    syncNotesAction: () => Promise<void>
+}>) {
     const [loading, setLoading] = useState<boolean>(false);
 
     return <div className='flex flex-col min-w-32 border border-gray-400'>
         <button
             key={"note_add"}
-            className='w-full p-1 border-b-2 border-gray-400 hover:bg-gray-200'
+            className='flex flex-row items-center place-content-center w-full p-1 border-b-2 border-zinc-200 hover:border-zinc-400'
             onClick={() => setNoteAction(getEmptyNote())}
-        ><span className="pi pi-plus mr-1"></span>Add</button>
+        >
+            <BsPlusLg className={"text-lg mr-1"}/> Add
+        </button>
 
-        <div className="flex flex-1 flex-col p-1">
+        <div className="flex flex-1 flex-col">
             {notes.map((note) =>
-                <button
+                <div
+                    className="p-1 flex flex-row justify-between border-b-2 border-zinc-200 hover:border-zinc-400 hover:bg-zinc-100"
                     key={"note_" + note.id}
-                    className='w-full p-1 border-b-2 border-gray-200 hover:bg-gray-100'
-                    onClick={() => setNoteAction(note)}
                 >
-                    <div className="text-left font-semibold">{note.name}</div>
-                    <div className="ps-2">{note.excerpt ?? note.content?.split('</p>')[0]
-                        .replace(/<p>/g, '')
-                        .substring(0, 10)}...</div>
-                </button>
+                    <button
+                        className='w-full'
+                        onClick={() => setNoteAction(note)}
+                    >
+                        <div className="text-left font-semibold">{note.name}</div>
+                        <div className="ps-2">{note.excerpt ?? note.content?.split('</p>')[0]
+                            .replace(/<p>/g, '')
+                            .substring(0, 10)}...
+                        </div>
+                    </button>
+                    <button className="transition ease-in-out text-zinc-600 hover:text-red-600">
+                        <BsTrash />
+                    </button>
+                </div>
             )}
         </div>
         <button
             key={"note_sync"}
-            className='w-full p-1 border-t-2 border-gray-400 bg-gray-50 hover:bg-gray-200'
+            className='flex flex-row items-center place-content-center w-full p-1 border-t-2 bg-gray-50 border-zinc-200 hover:border-zinc-400'
             onClick={() => {
                 if (loading) {
                     return
@@ -221,7 +245,8 @@ export function NoteBrowser({notes, setNoteAction, syncNotesAction}: Readonly<{ 
                 setLoading(true)
                 syncNotesAction().finally(() => setLoading(false));
             }}
-        ><span className={"pi " + (loading ? "pi-spin " : "") + "pi-sync mr-1"}></span>Sync
+        >
+            <BsArrowRepeat className={loading ? "text-lg animate-spin mr-1" : "text-lg mr-1"}/> Sync
         </button>
     </div>;
 }
@@ -254,7 +279,7 @@ export function NoteEditor({note, saveNoteAction}: Readonly<{
         }
     }, [editor, note]);
 
-    return <div className='flex flex-col h-full p-1'>
+    return <div className='flex flex-col h-full w-full'>
         <NoteMenu editor={editor} saveNoteAction={(html: string, text)=> {
             note.content = html;
             const lineBreak = text.indexOf("\n");
@@ -263,7 +288,7 @@ export function NoteEditor({note, saveNoteAction}: Readonly<{
             note.excerpt = text.substring(nameEnd + 1, nameEnd + 11)
             saveNoteAction(note)
         }}/>
-        <EditorContent editor={editor} className='h-full'/>
+        <EditorContent editor={editor} className='h-full px-1'/>
     </div>
 }
 
@@ -323,7 +348,7 @@ export default function Notes() {
         toast('Data synced with Firestore');
     }
 
-    return <div className='flex flex-row h-full'>
+    return <div className='flex flex-row h-full w-full'>
         <NoteBrowser notes={notes} setNoteAction={setNote} syncNotesAction={syncNotesAction}></NoteBrowser>
         <NoteEditor note={note} saveNoteAction={saveNoteAction}></NoteEditor>
     </div>
