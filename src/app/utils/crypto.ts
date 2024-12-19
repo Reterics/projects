@@ -4,6 +4,34 @@ export interface EncryptedData {
     salt: string;
 }
 
+export async function setActivePassphrase(newPassphrase: string) {
+    const passphrase = process.env.NEXT_PUBLIC_PASSPHRASE ?? 'passphrase';
+    const encrypted = await encryptData(newPassphrase, passphrase);
+    localStorage.setItem('iv', encrypted.iv);
+    localStorage.setItem('salt', encrypted.salt);
+    localStorage.setItem('encrypted', encrypted.encrypted);
+}
+
+async function getActivePassphrase(): Promise<string> {
+    const passphrase = process.env.NEXT_PUBLIC_PASSPHRASE ?? 'passphrase';
+
+    const encrypted = localStorage.getItem("encrypted");
+    const salt = localStorage.getItem("salt");
+    const iv = localStorage.getItem("iv");
+
+
+    const decryptedPhrase =  await decryptData({
+        encrypted: encrypted ?? '',
+        iv: iv ?? '',
+        salt: salt ?? '',
+    }, passphrase).catch(e=> console.error(e));
+
+    if (decryptedPhrase) {
+        return decryptedPhrase;
+    }
+    return passphrase;
+}
+
 async function deriveKeyPBKDF2Browser(passphrase: string, salt: Uint8Array<ArrayBuffer>) {
     const encoder = new TextEncoder();
     const passphraseKey = await crypto.subtle.importKey(
@@ -30,7 +58,7 @@ async function deriveKeyPBKDF2Browser(passphrase: string, salt: Uint8Array<Array
 }
 
 export async function encryptData(plainText: string, passphrase?: string): Promise<EncryptedData> {
-    passphrase = passphrase ?? process.env.NEXT_PUBLIC_PASSPHRASE ?? 'passphrase';
+    passphrase = passphrase ?? await getActivePassphrase();
 
     const encoder = new TextEncoder();
     const salt = crypto.getRandomValues(new Uint8Array(16));
@@ -52,7 +80,7 @@ export async function encryptData(plainText: string, passphrase?: string): Promi
 }
 
 export async function decryptData(encryptedData: EncryptedData, passphrase?: string): Promise<string>{
-    passphrase = passphrase ?? process.env.NEXT_PUBLIC_PASSPHRASE ?? 'passphrase';
+    passphrase = passphrase ?? await getActivePassphrase();
     const decoder = new TextDecoder();
 
     const encryptedBuffer = Uint8Array.from(atob(encryptedData.encrypted), c => c.charCodeAt(0));

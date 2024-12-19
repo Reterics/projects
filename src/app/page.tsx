@@ -7,6 +7,7 @@ import PTerminal from "@/app/pwa/pTerminal";
 import Notes from "@/app/pwa/notes/index";
 import MenuBar, {MenuBarItem} from "@/app/components/MenuBar.tsx";
 import {BsBook, BsCodeSquare} from "react-icons/bs";
+import PasswordDialog from "@/app/pwa/Password.tsx";
 
 export interface RunningApp {
     id: string;
@@ -17,11 +18,23 @@ export interface RunningApp {
     show: boolean;
     onClose?: () => void;
     entry: React.ReactNode;
+    width?: number;
+    height?: number;
 }
 
 
 export default function Home() {
-    const [apps, setApps] = useState<RunningApp[]>([]);
+    const [apps, setApps] = useState<RunningApp[]>([
+        {
+            id: '0_pwd',
+            label: 'Password Entry',
+            show: true,
+            entry: <PasswordDialog closeAction={() =>
+                setApps((prevApps) => prevApps.filter(a => a.id !== '0_pwd'))}/>,
+            width: 200,
+            height: 100,
+        }
+    ]);
 
     const focusAppById = (id: string)=> {
         let dialogNode: HTMLElement|null = null;
@@ -120,8 +133,11 @@ export default function Home() {
                 {apps
                     .map((app, index)=>
                         <Dialog key={'app_' + app.id + '_' + index}
-                                initialWidth={window.innerWidth / 2}
-                                initialHeight={window.innerHeight * 0.4}
+                                title={app.label}
+                                initialX={(window.innerWidth / 2) - (app.width ?? window.innerWidth / 2) / 2}
+                                initialY={(window.innerHeight / 2) - (app.height ?? window.innerHeight * 0.4) / 2}
+                                initialWidth={app.width ?? window.innerWidth / 2}
+                                initialHeight={app.height ?? window.innerHeight * 0.4}
                                 onClose={() => setApps((prevApps) => prevApps.filter(a => a !== app))}
                                 >
                             {app.entry}

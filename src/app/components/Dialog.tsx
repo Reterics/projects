@@ -7,21 +7,28 @@ export interface DialogProps {
     title?: string
     initialWidth?: number
     initialHeight?: number
+    initialX?: number
+    initialY?: number
     onClose?: ()=>void
     children?: React.ReactNode
 }
 
 export default function Dialog({
-   title = 'Untitled',
-   initialWidth = 400,
-   initialHeight = 300,
-   onClose,
-   children,
+    title = 'Untitled',
+    initialWidth = 400,
+    initialHeight = 300,
+    initialX = 0,
+    initialY = 0,
+    onClose,
+    children,
 }: Readonly<DialogProps>) {
     const [width, setWidth] = useState(initialWidth);
     const [height, setHeight] = useState(initialHeight);
     const dialogRef = useRef<HTMLDivElement>(null);
-    const posRef = useRef<{ x: number, y: number }>({ x: 0, y: 0 });
+    const posRef = useRef<{ x: number, y: number }>({
+        x: initialX,
+        y: initialY
+    });
     const previous = useRef<{
         position: { x: number, y: number },
         width: number,
