@@ -15,7 +15,7 @@ import {FirebaseStore} from "@/app/database/stores/FirebaseStore.ts";
 import {
     BsArrow90DegLeft, BsArrow90DegRight, BsArrowRepeat,
     BsCode,
-    BsCodeSquare, BsFileBreak, BsFloppy, BsHr,
+    BsCodeSquare, BsFloppy, BsHr,
     BsListOl,
     BsListUl, BsPlusLg,
     BsQuote, BsTable, BsTrash, BsType,
@@ -24,6 +24,7 @@ import {
     BsTypeStrikethrough
 } from "react-icons/bs";
 import Dropdown from "@/app/components/Dropdown.tsx";
+import {EncryptedData, isEncrypted} from "@/app/utils/crypto.ts";
 
 export interface NoteType extends IDBData {
     content?: string
@@ -310,14 +311,44 @@ export default function Notes() {
         })
     }
 
+    const decryptNote = async (note: NoteType) => {
+        if (!note.content && isEncrypted(note as unknown as EncryptedData)) {
+            let error;
+            await DBModel.decryptDoc(note)
+                .catch(e => {
+                    // console.error(e);
+                    error = e;
+                });
+            if (error) {
+                // toast.error('Error decrypting note');
+                return false;
+            }
+        }
+        return true;
+    };
+
+    const setDecryptedNotes = async (notes: NoteType[]) => {
+        const decrypted: NoteType[] = [];
+        for (const note of notes) {
+            if (await decryptNote(note)) {
+                decrypted.push(note);
+            }
+        }
+        setNotes(decrypted)
+    };
 
     useEffect(() => {
         if(store.current) {
-            store.current.load().then(()=> {
-                setNotes(store.current?.getAll('notes').toReversed() as NoteType[])
+            store.current.load().then(async ()=> {
+                await setDecryptedNotes(store.current?.getAll('notes').toReversed() as NoteType[])
             })
         }
     }, []);
+
+    const setNoteAction = async (note: NoteType) => {
+        await decryptNote(note);
+        setNote(note);
+    };
 
     const saveNoteAction = async (note: NoteType) => {
         if (!store.current) {
@@ -329,7 +360,7 @@ export default function Notes() {
         } else {
             await store.current.push(note, 'notes');
         }
-        setNotes(store.current.getAll('notes').toReversed() as NoteType[]);
+        await setDecryptedNotes(store.current?.getAll('notes').toReversed() as NoteType[]);
 
         toast('Note Saved');
     }
@@ -343,13 +374,13 @@ export default function Notes() {
         }
         await fireStore.current?.load();
         await DBModel.sync([store.current, fireStore.current], 'notes');
-        setNotes(store.current?.getAll('notes').toReversed() as NoteType[]);
+        await setDecryptedNotes(store.current?.getAll('notes').toReversed() as NoteType[]);
 
         toast('Data synced with Firestore');
     }
 
     return <div className='flex flex-row h-full w-full'>
-        <NoteBrowser notes={notes} setNoteAction={setNote} syncNotesAction={syncNotesAction}></NoteBrowser>
+        <NoteBrowser notes={notes} setNoteAction={setNoteAction} syncNotesAction={syncNotesAction}></NoteBrowser>
         <NoteEditor note={note} saveNoteAction={saveNoteAction}></NoteEditor>
     </div>
 }

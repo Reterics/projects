@@ -4,6 +4,10 @@ export interface EncryptedData {
     salt: string;
 }
 
+export function isEncrypted(data: Partial<EncryptedData>): boolean {
+    return !!(data.encrypted && data.iv && data.salt);
+}
+
 export async function setActivePassphrase(newPassphrase: string) {
     const passphrase = process.env.NEXT_PUBLIC_PASSPHRASE ?? 'passphrase';
     const encrypted = await encryptData(newPassphrase, passphrase);

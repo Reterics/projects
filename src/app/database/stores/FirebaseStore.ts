@@ -73,10 +73,11 @@ export class FirebaseStore extends DBModel {
                 const data = {...doc1.data(), id: doc1.id} as IDBData;
 
                 if (data && !data.deleted) {
+                    const decrypted = await DBModel.decryptDoc(data).catch(e=>console.error(e)) ?? data;
                     if (indexOf !== -1) {
-                        receivedData[indexOf] = await DBModel.decryptDoc(data)
+                        receivedData[indexOf] = decrypted
                     } else {
-                        receivedData.push(await DBModel.decryptDoc(data));
+                        receivedData.push(decrypted);
                     }
                 }
             }
