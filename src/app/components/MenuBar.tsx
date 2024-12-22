@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import logoDark from "@/app/assets/logo_thick.png";
 import Image from "next/image";
+import {RunningApp} from "@/app/page.tsx";
 
 export interface MenuBarItem {
-    label?: string
+    name?: string
+    label: string
     icon?: React.ReactNode
-    command?: () => void
+    create?: () => RunningApp
     separator?: boolean
     items?: MenuBarItem[]
     className?: string
@@ -13,9 +15,10 @@ export interface MenuBarItem {
 
 export interface MenuBarProps {
     model: MenuBarItem[]
+    onCreate: (app: RunningApp) => void
 }
 
-export default function MenuBar ({model}: MenuBarProps) {
+export default function MenuBar ({model, onCreate}: Readonly<MenuBarProps>) {
     const [currentTime, setCurrentTime] = useState<string|null>(null);
     const [openDropdown, setOpenDropdown] = useState<string|null>(null);
     const outsideRef = useRef<HTMLElement|null>(null);
@@ -45,8 +48,11 @@ export default function MenuBar ({model}: MenuBarProps) {
     }, []);
 
     const handleMenuClick = (item: MenuBarItem) => {
-        if (item.command && typeof item.command === 'function') {
-            item.command();
+        if (item.create && typeof item.create === 'function') {
+            const runningApp = item.create();
+            if (runningApp) {
+                onCreate(runningApp);
+            }
         }
         if (!item.items) {
             setOpenDropdown(null);
@@ -54,7 +60,7 @@ export default function MenuBar ({model}: MenuBarProps) {
     };
 
     const toggleDropdown = (itemLabel?: string) => {
-        const label = itemLabel || null;
+        const label = itemLabel ?? null;
         setOpenDropdown((prev) => (prev === label ? null : label));
     };
 
@@ -72,7 +78,7 @@ export default function MenuBar ({model}: MenuBarProps) {
                     if (item.separator) {
                         return (
                             <div
-                                key={Math.random()}
+                                key='separator'
                                 className="w-px h-4 bg-zinc-300 mx-2"
                             ></div>
                         );
@@ -87,10 +93,10 @@ export default function MenuBar ({model}: MenuBarProps) {
                                         : handleMenuClick(item)
                                 }
                                 className={`text-sm font-medium hover:bg-zinc-200 px-2 py-1 rounded transition-colors ${
-                                    item.className || ''
+                                    item.className ?? ''
                                 }`}
                             >
-                                {item.icon}
+                                {item.icon} {item.icon ? <div className='mr-2'></div> : undefined}
                                 {item.label}
                             </button>
                             {hasDropdown && openDropdown === item.label && (
@@ -100,14 +106,14 @@ export default function MenuBar ({model}: MenuBarProps) {
                                             if (subItem.separator) {
                                                 return (
                                                     <li
-                                                        key={index}
+                                                        key='sub_separator'
                                                         className="border-t border-zinc-300 my-1"
                                                     ></li>
                                                 );
                                             }
                                             return (
                                                 <li
-                                                    key={subItem.label || index}
+                                                    key={subItem.label ?? index}
                                                     onClick={() => handleMenuClick(subItem)}
                                                     className="hover:bg-zinc-200 px-2 pt-2 pb-1 cursor-pointer text-sm flex items-center"
                                                 >
