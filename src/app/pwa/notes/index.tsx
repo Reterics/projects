@@ -94,7 +94,7 @@ export function NoteMenu({ editor, saveNoteAction }: Readonly<NoteMenuProps>) {
     ];
 
     return (
-        <div className="w-full flex flex-row flex-wrap border-b border-zinc-400">
+        <div className="w-full flex flex-row flex-wrap border-b-2 border-zinc-200">
             <button
                 className={buttonClass(false, true) + " border-r-2 border-r-gray-200"}
                 onClick={() => saveNoteAction(editor?.getHTML(), editor?.getText())}>
@@ -205,14 +205,31 @@ export function NoteBrowser({notes, setNoteAction, syncNotesAction}: Readonly<{
 }>) {
     const [loading, setLoading] = useState<boolean>(false);
 
-    return <div className='flex flex-col min-w-32 border border-gray-400'>
-        <button
-            key={"note_add"}
-            className='flex flex-row items-center place-content-center w-full p-1 border-b-2 border-zinc-200 hover:border-zinc-400'
-            onClick={() => setNoteAction(getEmptyNote())}
-        >
-            <BsPlusLg className={"text-lg mr-1"}/> Add
-        </button>
+    return <div className='flex flex-col h-fit min-w-32 border-e-2 border-zinc-200'>
+
+        <div className="flex flex-row">
+            <button
+                key={"note_sync"}
+                className='flex flex-row items-center place-content-center w-full p-2 border-b-2 border-e bg-gray-50 border-zinc-200 hover:bg-gray-200'
+                onClick={() => {
+                    if (loading) {
+                        return
+                    }
+                    setLoading(true)
+                    syncNotesAction().finally(() => setLoading(false));
+                }}
+            >
+                <BsArrowRepeat className={loading ? "text-lg animate-spin mr-1" : "text-lg mr-1"}/>
+            </button>
+
+            <button
+                key={"note_add"}
+                className='flex flex-row items-center place-content-center w-full p-2 border-b-2 border-s border-zinc-200 hover:bg-gray-200'
+                onClick={() => setNoteAction(getEmptyNote())}
+            >
+                <BsPlusLg className={"text-lg mr-1"}/>
+            </button>
+        </div>
 
         <div className="flex flex-1 flex-col">
             {notes.map((note) =>
@@ -236,19 +253,7 @@ export function NoteBrowser({notes, setNoteAction, syncNotesAction}: Readonly<{
                 </div>
             )}
         </div>
-        <button
-            key={"note_sync"}
-            className='flex flex-row items-center place-content-center w-full p-1 border-t-2 bg-gray-50 border-zinc-200 hover:border-zinc-400'
-            onClick={() => {
-                if (loading) {
-                    return
-                }
-                setLoading(true)
-                syncNotesAction().finally(() => setLoading(false));
-            }}
-        >
-            <BsArrowRepeat className={loading ? "text-lg animate-spin mr-1" : "text-lg mr-1"}/> Sync
-        </button>
+
     </div>;
 }
 

@@ -1,4 +1,4 @@
-import {useRef} from "react";
+import {useEffect, useRef} from "react";
 import {setActivePassphrase} from "@/app/utils/crypto.ts";
 
 
@@ -13,6 +13,11 @@ export default function PasswordDialog({closeAction}: Readonly<{ closeAction: ()
         }
     };
 
+    useEffect(() => {
+        if (input.current) {
+            input.current.focus();
+        }
+    }, []);
     return (
         <div className="w-full">
             <div>
