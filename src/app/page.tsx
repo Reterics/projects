@@ -67,6 +67,10 @@ export default function Home() {
         }
     ];
 
+    if (typeof window === 'undefined') {
+        return null;
+    }
+
     return (
         <div className="system-outer w-full h-full flex flex-col">
             {!appName &&<MenuBar model={menubarItems} onCreate={onCreateAction}/> }

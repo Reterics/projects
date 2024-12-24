@@ -31,7 +31,7 @@ export default abstract class DBModel {
     abstract saveIn(ms: number): void;
 
     getAll(table: string): IDBData[] {
-        return this._data[table] || [];
+        return (this._data[table] || []).filter(d => !d.deleted);
     }
 
     get(id: string, table: string): IDBData|undefined {

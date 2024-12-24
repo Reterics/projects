@@ -198,10 +198,11 @@ export function NoteMenu({ editor, saveNoteAction }: Readonly<NoteMenuProps>) {
     )
 }
 
-export function NoteBrowser({notes, setNoteAction, syncNotesAction}: Readonly<{
+export function NoteBrowser({notes, setNoteAction, syncNotesAction, saveNoteAction}: Readonly<{
     notes: NoteType[],
     setNoteAction: (note: NoteType) => void,
     syncNotesAction: () => Promise<void>
+    saveNoteAction: (note: NoteType) => Promise<void>
 }>) {
     const [loading, setLoading] = useState<boolean>(false);
 
@@ -247,7 +248,18 @@ export function NoteBrowser({notes, setNoteAction, syncNotesAction}: Readonly<{
                             .substring(0, 10)}...
                         </div>
                     </button>
-                    <button className="transition ease-in-out text-zinc-600 hover:text-red-600">
+                    <button
+                        onClick={async ()=> {
+                            if (confirm('Are you sure to delete this note: ' + note.name + '  ?')) {
+                                await saveNoteAction({
+                                    ...note,
+                                    deleted: true
+                                });
+                                setNoteAction(getEmptyNote())
+                            }
+                        }}
+                        className="transition ease-in-out text-zinc-600 hover:text-red-600"
+                    >
                         <BsTrash />
                     </button>
                 </div>
@@ -385,8 +397,12 @@ export default function Notes() {
     }
 
     return <div className='flex flex-row h-full w-full'>
-        <NoteBrowser notes={notes} setNoteAction={setNoteAction} syncNotesAction={syncNotesAction}></NoteBrowser>
-        <NoteEditor note={note} saveNoteAction={saveNoteAction}></NoteEditor>
+        <NoteBrowser
+            notes={notes}
+            setNoteAction={setNoteAction}
+            syncNotesAction={syncNotesAction}
+            saveNoteAction={saveNoteAction} />
+        <NoteEditor note={note} saveNoteAction={saveNoteAction} />
     </div>
 }
 
