@@ -4,7 +4,7 @@ import {decryptData, encryptData, EncryptedData} from "@/app/utils/crypto.ts";
 export interface IDBData {
     id: string,
     updated: number | string,
-    [key: string]: string | number | boolean | undefined
+    [key: string]: string | number | boolean | undefined | string[]
 }
 
 export interface IDBCollection  {
