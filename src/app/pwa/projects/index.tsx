@@ -4,8 +4,16 @@ import {FirebaseStore} from "@/app/database/stores/FirebaseStore.ts";
 import {EncryptedData, isEncrypted} from "@/app/utils/crypto.ts";
 import DBModel, {IDBData} from "@/app/database/DBModel.ts";
 import {toast} from "react-toastify";
+import {EditorContent, useEditor} from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import Table from "@tiptap/extension-table";
+import TableHeader from "@tiptap/extension-table-header";
+import TableRow from "@tiptap/extension-table-row";
+import TableCell from "@tiptap/extension-table-cell";
+import {NoteMenu} from "@/app/pwa/notes";
+import {BsTrash} from "react-icons/bs";
 
-export interface ProjectType extends IDBData{
+export interface ProjectType extends IDBData {
     id: string;
     title: string;
     description: string;
@@ -26,7 +34,37 @@ export function ProjectEditor({project, saveProjectAction}: Readonly<{
     project: ProjectType,
     saveProjectAction: (project: ProjectType) => Promise<void>
 }>) {
-    return <div></div>;
+    const editor = useEditor({
+        extensions: [
+            StarterKit,
+            Table.configure({
+                resizable: true,
+            }),
+            TableHeader,
+            TableRow,
+            TableCell
+        ],
+        // content: note.content,
+        editorProps: {
+            attributes: {
+                spellcheck: 'false',
+            },
+        },
+    })
+
+    useEffect(()=> {
+        if (editor && project.description) {
+            editor.commands.setContent(project.description);
+        }
+    }, [editor, project]);
+
+    return <div className='flex flex-col h-full w-full'>
+        <NoteMenu editor={editor} saveNoteAction={(html: string)=> {
+            project.description = html;
+            return saveProjectAction(project)
+        }}/>
+        <EditorContent editor={editor} className='h-full px-1'/>
+    </div>
 }
 
 export function ProjectBrowser({projects, setProjectAction, syncProjectsAction, saveProjectAction}: Readonly<{
@@ -36,7 +74,42 @@ export function ProjectBrowser({projects, setProjectAction, syncProjectsAction, 
     saveProjectAction: (project: ProjectType) => Promise<void>
 }>) {
     return (<div>
-        {projects.map((project, index) => <div key={'project_'+index}>{project.title}</div>)}
+        <div className="flex flex-wrap gap-4 p-4">
+            {projects.map((project) => (
+                <div
+                    className="w-40 h-40 flex flex-col items-center justify-between border border-zinc-200 p-2 hover:border-zinc-400 hover:bg-zinc-100"
+                    key={"project_" + project.id}
+                >
+                    <button
+                        className="w-full text-center"
+                        onClick={() => setProjectAction(project)}
+                    >
+                        {/* Placeholder for an icon */}
+                        <div className="text-6xl text-zinc-500 mb-2">📄</div>
+                        <div className="text-sm font-semibold truncate">{project.name}</div>
+                    </button>
+                    <div className="text-xs text-zinc-400">{project.updatedDate}</div>
+                    <button
+                        onClick={async () => {
+                            if (
+                                confirm(
+                                    "Are you sure to delete this project: " + project.name + " ?"
+                                )
+                            ) {
+                                await saveProjectAction({
+                                    ...project,
+                                    deleted: true,
+                                });
+                                setProjectAction(getEmptyProject());
+                            }
+                        }}
+                        className="transition ease-in-out text-zinc-600 hover:text-red-600 mt-2"
+                    >
+                        <BsTrash/>
+                    </button>
+                </div>
+            ))}
+        </div>
     </div>);
 }
 
@@ -44,14 +117,14 @@ export default function Projects() {
     const [projects, setProjects] = useState<ProjectType[]>([]);
     const [project, setProject] = useState<ProjectType>(getEmptyProject());
 
-    const store = useRef<IDBStore|null>(null);
+    const store = useRef<IDBStore | null>(null);
     if (!store.current) {
         store.current = new IDBStore({
             tables: ['projects']
         })
     }
 
-    const fireStore = useRef<FirebaseStore|null>(null);
+    const fireStore = useRef<FirebaseStore | null>(null);
     if (!fireStore.current) {
         fireStore.current = new FirebaseStore({
             tables: ['projects']
@@ -85,7 +158,7 @@ export default function Projects() {
     };
 
     useEffect(() => {
-        if(store.current) {
+        if (store.current) {
             store.current.load().then(async ()=> {
                 await setDecryptedProjects(store.current?.getAll('projects').toReversed() as ProjectType[])
             })
@@ -128,7 +201,7 @@ export default function Projects() {
     };
 
     return <div className='flex flex-row h-full w-full'>
-        <ProjectBrowser projects={projects} setProjectAction={setProjectAction} syncProjectsAction={syncProjectsAction} saveProjectAction={saveProjectAction}></ProjectBrowser>
-        <ProjectEditor project={project} saveProjectAction={saveProjectAction}></ProjectEditor>
+        {!project.title && <ProjectBrowser projects={projects} setProjectAction={setProjectAction} syncProjectsAction={syncProjectsAction} saveProjectAction={saveProjectAction}></ProjectBrowser>}
+        {project.title && <ProjectEditor project={project} saveProjectAction={saveProjectAction}></ProjectEditor> }
     </div>
 }

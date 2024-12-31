@@ -1,7 +1,8 @@
-import {BsBook, BsFillTerminalFill} from "react-icons/bs";
+import {BsBook, BsBoxes, BsFillTerminalFill} from "react-icons/bs";
 import PTerminal from "@/app/pwa/pTerminal.tsx";
 import React from "react";
 import Notes from "@/app/pwa/notes";
+import Projects from "@/app/pwa/projects";
 import {MenuBarItem} from "@/app/components/MenuBar.tsx";
 import {RunningApp} from "@/app/page.tsx";
 
@@ -77,5 +78,25 @@ const terminal: MenuBarItem = {
     }
 }
 
-export const pwaItems: MenuBarItem[] = [notes, terminal];
+const projects: MenuBarItem = {
+    name: 'projects',
+    label: 'Projects',
+    icon: <BsBoxes />,
+    create: () => {
+        const id = new Date().getTime().toString()
+        return {
+            id,
+            label: projects.label,
+            icon: projects.icon,
+            show: true,
+            focus: () => focusAppById(id),
+            onClose: () => hideAppById(id),
+            entry: <Projects />,
+        }
+    }
+}
+
+
+
+export const pwaItems: MenuBarItem[] = [notes, terminal, projects];
 
