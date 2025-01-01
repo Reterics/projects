@@ -58,7 +58,7 @@ function getLargerID(currentID: string): string {
 
 export default class IDBStore extends DBModel {
     protected _db: IDBDatabase | null = null;
-    protected _version = 1;
+    protected _version = 2;
 
     private async getDB(): Promise<IDBDatabase> {
         if (this._db) return this._db;

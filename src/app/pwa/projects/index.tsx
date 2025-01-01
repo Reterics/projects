@@ -11,7 +11,7 @@ import TableHeader from "@tiptap/extension-table-header";
 import TableRow from "@tiptap/extension-table-row";
 import TableCell from "@tiptap/extension-table-cell";
 import {NoteMenu} from "@/app/pwa/notes";
-import {BsTrash} from "react-icons/bs";
+import {BsFileEarmark, BsFillFloppy2Fill, BsTrash} from "react-icons/bs";
 
 export interface ProjectType extends IDBData {
     id: string;
@@ -73,8 +73,34 @@ export function ProjectBrowser({projects, setProjectAction, syncProjectsAction, 
     syncProjectsAction: () => Promise<void>
     saveProjectAction: (project: ProjectType) => Promise<void>
 }>) {
+    const nameRef = useRef<HTMLInputElement>(null);
     return (<div>
         <div className="flex flex-wrap gap-4 p-4">
+
+            <div
+                className="w-40 h-40 flex flex-col items-center justify-between border border-zinc-200 p-2 hover:border-zinc-400 hover:bg-zinc-100"
+            >
+                <div
+                    className="flex flex-col h-full w-full"
+                >
+                    <div className="mb-2">
+                        Name
+                    </div>
+                    <div className="text-sm font-semibold truncate flex-1">
+                        <input ref={nameRef}/>
+                    </div>
+                    <button
+                        className="text-2xl"
+                        onClick={() => setProjectAction({
+                            ...getEmptyProject(),
+                            title: nameRef.current?.value ?? '',
+                        })}
+                    >
+                        <BsFillFloppy2Fill />
+                    </button>
+                </div>
+            </div>
+
             {projects.map((project) => (
                 <div
                     className="w-40 h-40 flex flex-col items-center justify-between border border-zinc-200 p-2 hover:border-zinc-400 hover:bg-zinc-100"
@@ -84,8 +110,7 @@ export function ProjectBrowser({projects, setProjectAction, syncProjectsAction, 
                         className="w-full text-center"
                         onClick={() => setProjectAction(project)}
                     >
-                        {/* Placeholder for an icon */}
-                        <div className="text-6xl text-zinc-500 mb-2">📄</div>
+                        <div className="text-6xl text-zinc-500 mb-2"><BsFileEarmark /></div>
                         <div className="text-sm font-semibold truncate">{project.name}</div>
                     </button>
                     <div className="text-xs text-zinc-400">{project.updatedDate}</div>
@@ -169,6 +194,13 @@ export default function Projects() {
     const setProjectAction = async (project: ProjectType) => {
         await decryptProject(project);
         setProject(project);
+        if (store.current) {
+            if (store.current.get(project.id, 'projects')) {
+                await store.current.update(project, 'projects');
+            } else {
+                await store.current.push(project, 'projects');
+            }
+        }
     };
 
     const saveProjectAction = async (project: ProjectType) => {
