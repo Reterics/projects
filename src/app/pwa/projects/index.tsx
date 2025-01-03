@@ -30,9 +30,10 @@ export const getEmptyProject = (): ProjectType => {
         updated: new Date().getTime()
     }
 };
-export function ProjectEditor({project, saveProjectAction}: Readonly<{
+export function ProjectEditor({project, saveProjectAction, backAction}: Readonly<{
     project: ProjectType,
-    saveProjectAction: (project: ProjectType) => Promise<void>
+    saveProjectAction: (project: ProjectType) => Promise<void>,
+    backAction: () => void
 }>) {
     const editor = useEditor({
         extensions: [
@@ -59,10 +60,10 @@ export function ProjectEditor({project, saveProjectAction}: Readonly<{
     }, [editor, project]);
 
     return <div className='flex flex-col h-full w-full'>
-        <NoteMenu editor={editor} saveNoteAction={(html: string)=> {
+        <NoteMenu editor={editor} saveAction={(html: string)=> {
             project.description = html;
             return saveProjectAction(project)
-        }}/>
+        }} backAction={backAction}/>
         <EditorContent editor={editor} className='h-full px-1'/>
     </div>
 }
@@ -232,8 +233,12 @@ export default function Projects() {
         toast('Data synced with Firestore');
     };
 
+    const backAction = () => {
+        setProject(getEmptyProject())
+    };
+
     return <div className='flex flex-row h-full w-full'>
         {!project.title && <ProjectBrowser projects={projects} setProjectAction={setProjectAction} syncProjectsAction={syncProjectsAction} saveProjectAction={saveProjectAction}></ProjectBrowser>}
-        {project.title && <ProjectEditor project={project} saveProjectAction={saveProjectAction}></ProjectEditor> }
+        {project.title && <ProjectEditor project={project} saveProjectAction={saveProjectAction} backAction={backAction}></ProjectEditor> }
     </div>
 }

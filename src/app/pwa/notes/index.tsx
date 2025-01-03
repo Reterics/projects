@@ -13,13 +13,30 @@ import DBModel, {IDBData} from "@/app/database/DBModel.ts";
 import { toast } from 'react-toastify';
 import {FirebaseStore} from "@/app/database/stores/FirebaseStore.ts";
 import {
-    BsArrow90DegLeft, BsArrow90DegRight, BsArrowRepeat,
+    BsArrow90DegLeft,
+    BsArrow90DegRight,
+    BsArrowRepeat,
+    BsCaretLeft,
+    BsChevronDoubleLeft,
+    BsChevronDoubleRight,
     BsCode,
-    BsCodeSquare, BsFloppy, BsHr,
+    BsCodeSquare,
+    BsFloppy,
+    BsHr,
     BsListOl,
-    BsListUl, BsPlusLg,
-    BsQuote, BsTable, BsTrash, BsType,
-    BsTypeBold, BsTypeH1, BsTypeH2, BsTypeH3, BsTypeH4, BsTypeH5, BsTypeH6,
+    BsListUl,
+    BsPlusLg,
+    BsQuote,
+    BsTable,
+    BsTrash,
+    BsType,
+    BsTypeBold,
+    BsTypeH1,
+    BsTypeH2,
+    BsTypeH3,
+    BsTypeH4,
+    BsTypeH5,
+    BsTypeH6,
     BsTypeItalic,
     BsTypeStrikethrough
 } from "react-icons/bs";
@@ -34,7 +51,9 @@ export interface NoteType extends IDBData {
 
 export interface NoteMenuProps {
     editor: Editor | null
-    saveNoteAction: (html: string, text: string) => void
+    saveAction: (html: string, text: string) => void
+    backAction?: () => void
+    removeAction?: () => void
 }
 
 export const getEmptyNote = (): NoteType => {
@@ -71,7 +90,9 @@ export const tableHTML = `
   </table>
 `
 
-export function NoteMenu({ editor, saveNoteAction }: Readonly<NoteMenuProps>) {
+export function NoteMenu({ editor, saveAction, backAction, removeAction }: Readonly<NoteMenuProps>) {
+    const [extended, setExtended] = useState(false);
+
     if (!editor) return null;
 
     const buttonClass = (isActive?: boolean, icon?:boolean) => {
@@ -93,13 +114,22 @@ export function NoteMenu({ editor, saveNoteAction }: Readonly<NoteMenuProps>) {
         { value: "6", icon: <BsTypeH6 />, label: "Heading 6" },
     ];
 
-    return (
-        <div className="w-full flex flex-row flex-wrap border-b-2 border-zinc-200">
+    return (<div className="w-full flex flex-row">
+        <div className="flex flex-row">
+            {backAction && <button
+                className={buttonClass(false, true) + " border-r-2 border-r-gray-200"}
+                onClick={() => backAction()}>
+                <BsCaretLeft/>
+            </button>}
+
             <button
                 className={buttonClass(false, true) + " border-r-2 border-r-gray-200"}
-                onClick={() => saveNoteAction(editor?.getHTML(), editor?.getText())}>
+                onClick={() => saveAction(editor?.getHTML(), editor?.getText())}>
                 <BsFloppy/>
             </button>
+        </div>
+
+        <div className="w-full flex flex-row flex-wrap border-b-2 border-zinc-200 place-content-center">
             <button
                 onClick={() => editor.chain().focus().toggleBold().run()}
                 className={buttonClass(editor.isActive('bold'))}
@@ -118,6 +148,8 @@ export function NoteMenu({ editor, saveNoteAction }: Readonly<NoteMenuProps>) {
             >
                 <BsTypeStrikethrough/>
             </button>
+
+            {extended && <>
             <Dropdown
                 className={buttonClass(false, true) + " border-r-2 border-r-gray-200"}
                 options={paragraphOptions}
@@ -194,7 +226,27 @@ export function NoteMenu({ editor, saveNoteAction }: Readonly<NoteMenuProps>) {
                 <BsArrow90DegRight/>
 
             </button>
+            </>
+            }
+
+
+            <button
+                className={buttonClass(false, true) + " border-s-2 border-r-gray-200"}
+                onClick={() => setExtended(!extended)}
+            >
+                {extended && <BsChevronDoubleLeft />}
+                {!extended && <BsChevronDoubleRight />}
+
+            </button>
         </div>
+        <div className="flex flex-row">
+            {removeAction && <button
+                className={buttonClass(false, true) + " border-s-2 border-r-gray-200"}
+                onClick={() => removeAction()}>
+                <BsTrash />
+            </button>}
+        </div>
+    </div>
     )
 }
 
@@ -269,9 +321,10 @@ export function NoteBrowser({notes, setNoteAction, syncNotesAction, saveNoteActi
     </div>;
 }
 
-export function NoteEditor({note, saveNoteAction}: Readonly<{
+export function NoteEditor({note, saveAction, removeAction}: Readonly<{
     note: NoteType,
-    saveNoteAction: (note: NoteType) => void
+    saveAction: (note: NoteType) => void,
+    removeAction: () => void
 }>) {
     const editor = useEditor({
         extensions: [
@@ -298,14 +351,14 @@ export function NoteEditor({note, saveNoteAction}: Readonly<{
     }, [editor, note]);
 
     return <div className='flex flex-col h-full w-full'>
-        <NoteMenu editor={editor} saveNoteAction={(html: string, text)=> {
+        <NoteMenu editor={editor} saveAction={(html: string, text)=> {
             note.content = html;
             const lineBreak = text.indexOf("\n");
             const nameEnd = lineBreak <= 1 ? 10 : lineBreak;
             note.name = text.substring(0, nameEnd);
             note.excerpt = text.substring(nameEnd + 1, nameEnd + 11)
-            saveNoteAction(note)
-        }}/>
+            saveAction(note)
+        }} removeAction={removeAction}/>
         <EditorContent editor={editor} className='h-full px-1'/>
     </div>
 }
@@ -396,13 +449,24 @@ export default function Notes() {
         toast('Data synced with Firestore');
     }
 
+    const removeNoteAction = async () => {
+        if (note?.id) {
+            await store.current?.remove(note.id, 'notes');
+            await fireStore.current?.remove(note.id, 'notes');
+
+            toast('Note Removed');
+
+            setNote(getEmptyNote());
+        }
+    }
+
     return <div className='flex flex-row h-full w-full'>
         <NoteBrowser
             notes={notes}
             setNoteAction={setNoteAction}
             syncNotesAction={syncNotesAction}
             saveNoteAction={saveNoteAction} />
-        <NoteEditor note={note} saveNoteAction={saveNoteAction} />
+        <NoteEditor note={note} saveAction={saveNoteAction} removeAction={removeNoteAction}/>
     </div>
 }
 
