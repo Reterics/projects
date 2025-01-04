@@ -35,3 +35,19 @@ body {
         padding-right: 4px
     }
 }
+
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgb(210, 210, 213);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgb(174, 174, 177);
+}

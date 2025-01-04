@@ -16,7 +16,7 @@ import {
     BsArrow90DegLeft,
     BsArrow90DegRight,
     BsArrowRepeat,
-    BsCaretLeft,
+    BsCaretLeft, BsCaretRight,
     BsChevronDoubleLeft,
     BsChevronDoubleRight,
     BsCode,
@@ -54,6 +54,7 @@ export interface NoteMenuProps {
     saveAction: (html: string, text: string) => void
     backAction?: () => void
     removeAction?: () => void
+    leftSideAction?: () => void
 }
 
 export const getEmptyNote = (): NoteType => {
@@ -90,7 +91,7 @@ export const tableHTML = `
   </table>
 `
 
-export function NoteMenu({ editor, saveAction, backAction, removeAction }: Readonly<NoteMenuProps>) {
+export function NoteMenu({ editor, saveAction, backAction, removeAction, leftSideAction }: Readonly<NoteMenuProps>) {
     const [extended, setExtended] = useState(false);
 
     if (!editor) return null;
@@ -115,11 +116,16 @@ export function NoteMenu({ editor, saveAction, backAction, removeAction }: Reado
     ];
 
     return (<div className="w-full flex flex-row">
-        <div className="flex flex-row">
+        <div className="flex flex-row h-fit">
             {backAction && <button
                 className={buttonClass(false, true) + " border-r-2 border-r-gray-200"}
                 onClick={() => backAction()}>
                 <BsCaretLeft/>
+            </button>}
+            {leftSideAction && <button
+                className={buttonClass(false, true) + " border-r-2 border-r-gray-200"}
+                onClick={() => leftSideAction()}>
+                <BsCaretRight/>
             </button>}
 
             <button
@@ -239,7 +245,7 @@ export function NoteMenu({ editor, saveAction, backAction, removeAction }: Reado
 
             </button>
         </div>
-        <div className="flex flex-row">
+        <div className="flex flex-row h-fit">
             {removeAction && <button
                 className={buttonClass(false, true) + " border-s-2 border-r-gray-200"}
                 onClick={() => removeAction()}>
@@ -258,7 +264,7 @@ export function NoteBrowser({notes, setNoteAction, syncNotesAction, saveNoteActi
 }>) {
     const [loading, setLoading] = useState<boolean>(false);
 
-    return <div className='flex flex-col h-fit min-w-32 border-e-2 border-zinc-200'>
+    return <div className='flex flex-col overflow-y-auto min-w-32 border-e-2 border-zinc-200'>
 
         <div className="flex flex-row">
             <button
@@ -321,10 +327,12 @@ export function NoteBrowser({notes, setNoteAction, syncNotesAction, saveNoteActi
     </div>;
 }
 
-export function NoteEditor({note, saveAction, removeAction}: Readonly<{
+export function NoteEditor({note, saveAction, removeAction, leftSideAction, backAction}: Readonly<{
     note: NoteType,
     saveAction: (note: NoteType) => void,
-    removeAction: () => void
+    removeAction: () => void,
+    leftSideAction?: () => void,
+    backAction?: () => void
 }>) {
     const editor = useEditor({
         extensions: [
@@ -351,14 +359,20 @@ export function NoteEditor({note, saveAction, removeAction}: Readonly<{
     }, [editor, note]);
 
     return <div className='flex flex-col h-full w-full'>
-        <NoteMenu editor={editor} saveAction={(html: string, text)=> {
-            note.content = html;
-            const lineBreak = text.indexOf("\n");
-            const nameEnd = lineBreak <= 1 ? 10 : lineBreak;
-            note.name = text.substring(0, nameEnd);
-            note.excerpt = text.substring(nameEnd + 1, nameEnd + 11)
-            saveAction(note)
-        }} removeAction={removeAction}/>
+        <NoteMenu
+            editor={editor}
+            saveAction={(html: string, text)=> {
+                note.content = html;
+                const lineBreak = text.indexOf("\n");
+                const nameEnd = lineBreak <= 1 ? 10 : lineBreak;
+                note.name = text.substring(0, nameEnd);
+                note.excerpt = text.substring(nameEnd + 1, nameEnd + 11)
+                saveAction(note)
+            }}
+            removeAction={removeAction}
+            leftSideAction={leftSideAction}
+            backAction={backAction}
+        />
         <EditorContent editor={editor} className='h-full px-1'/>
     </div>
 }
@@ -366,6 +380,7 @@ export function NoteEditor({note, saveAction, removeAction}: Readonly<{
 export default function Notes() {
     const [notes, setNotes] = useState<NoteType[]>([]);
     const [note, setNote] = useState<NoteType>(getEmptyNote());
+    const [sidebarOpen, setSidebarOpen] = useState(true);
 
     const store = useRef<IDBStore|null>(null);
     if (!store.current) {
@@ -461,12 +476,18 @@ export default function Notes() {
     }
 
     return <div className='flex flex-row h-full w-full'>
-        <NoteBrowser
+        {sidebarOpen && <NoteBrowser
             notes={notes}
             setNoteAction={setNoteAction}
             syncNotesAction={syncNotesAction}
-            saveNoteAction={saveNoteAction} />
-        <NoteEditor note={note} saveAction={saveNoteAction} removeAction={removeNoteAction}/>
+            saveNoteAction={saveNoteAction}/>}
+        <NoteEditor
+            note={note}
+            saveAction={saveNoteAction}
+            removeAction={removeNoteAction}
+            backAction={sidebarOpen ? () => setSidebarOpen(false) : undefined}
+            leftSideAction={!sidebarOpen ? () => setSidebarOpen(true) : undefined}
+        />
     </div>
 }
 
