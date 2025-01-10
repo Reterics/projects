@@ -42,6 +42,7 @@ import {
 } from "react-icons/bs";
 import Dropdown from "@/app/components/Dropdown.tsx";
 import {EncryptedData, isEncrypted} from "@/app/utils/crypto.ts";
+import {confirm} from "@/app/components/confirm";
 
 export interface NoteType extends IDBData {
     content?: string
@@ -308,7 +309,8 @@ export function NoteBrowser({notes, setNoteAction, syncNotesAction, saveNoteActi
                     </button>
                     <button
                         onClick={async ()=> {
-                            if (confirm('Are you sure to delete this note: ' + note.name + '  ?')) {
+                            const response = await confirm('Are you sure to delete this note: ' + note.name + '  ?')
+                            if (response) {
                                 await saveNoteAction({
                                     ...note,
                                     deleted: true

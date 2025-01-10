@@ -13,6 +13,38 @@ export interface DialogProps {
     children?: React.ReactNode
 }
 
+export const titleBarClasses = `
+    flex items-center justify-between
+    bg-gradient-to-r from-gray-300 to-gray-100
+    border-b border-gray-300
+    cursor-move
+    select-none
+  `;
+
+export const windowClasses = `
+    border border-gray-400
+    shadow-lg
+    bg-gray-50
+    text-black
+    flex flex-col
+  `;
+
+const minimizeButtonClasses = `
+    w-6 h-6 flex items-end justify-center
+    hover:bg-gray-200
+    cursor-pointer p-1
+  `;
+const maximizeButtonClasses = `
+    w-6 h-6 flex items-center justify-center
+    hover:bg-gray-200
+    cursor-pointer p-1.5
+  `;
+export const controlButtonClasses = `
+    w-6 h-6 flex items-center justify-center
+    hover:bg-gray-200
+    cursor-pointer p-1
+  `;
+
 export default function Dialog({
     title = 'Untitled',
     initialWidth = 400,
@@ -49,37 +81,8 @@ export default function Dialog({
         }
     }, [height, width])
 
-    const titleBarClasses = `
-    flex items-center justify-between
-    bg-gradient-to-r from-gray-300 to-gray-100
-    border-b border-gray-300
-    cursor-move
-    select-none
-  `;
 
-    const windowClasses = `
-    border border-gray-400
-    shadow-lg
-    bg-gray-50
-    text-black
-    flex flex-col
-  `;
 
-    const minimizeButtonClasses = `
-    w-6 h-6 flex items-end justify-center
-    hover:bg-gray-200
-    cursor-pointer p-1
-  `;
-    const maximizeButtonClasses = `
-    w-6 h-6 flex items-center justify-center
-    hover:bg-gray-200
-    cursor-pointer p-1.5
-  `;
-    const controlButtonClasses = `
-    w-6 h-6 flex items-center justify-center
-    hover:bg-gray-200
-    cursor-pointer p-1
-  `;
 
     const parent = dialogRef.current?.parentElement;
     const isMinimized = height < 33 && width < 151;
