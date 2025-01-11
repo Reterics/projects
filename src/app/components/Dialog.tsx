@@ -1,4 +1,4 @@
-import React, {useCallback, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import { Resizable } from 're-resizable';
 import DraggableDiv from "@/app/components/DraggableDiv.tsx";
 import { BsCopy, BsDashLg, BsSquare, BsXLg} from "react-icons/bs";
@@ -82,14 +82,24 @@ export default function Dialog({
     }, [height, width])
 
 
-
-
     const parent = dialogRef.current?.parentElement;
     const isMinimized = height < 33 && width < 151;
     const isMaximized = parent && parent.offsetHeight === height && parent.offsetWidth === width;
 
+    const onClick = () => {
+        if (!dialogRef.current?.classList.contains('active')) {
+            document.querySelectorAll('.dialog-modal').forEach((element) => {
+                if (element !== dialogRef.current) {
+                    element.classList.remove('active');
+                } else {
+                    element.classList.add('active');
+                }
+            })
+        }
+    };
+
     return (
-        <DraggableDiv ref={dialogRef} pos={posRef} handle='.title-bar'>
+        <DraggableDiv ref={dialogRef} pos={posRef} handle='.title-bar' className="dialog-modal" onClick={onClick}>
             <div
                 style={{ width: width, height: height }}
                 className="absolute z-40"

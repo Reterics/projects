@@ -5,13 +5,17 @@ export interface DraggableDivProps {
     ref: RefObject<HTMLDivElement|null>;
     pos: RefObject<{ x: number, y: number }>;
     handle: string
-    children?: React.ReactNode
+    className?: string
+    children?: React.ReactNode,
+    onClick?: (e: MouseEvent) => void,
 }
 
 export default function DraggableDiv({
     ref,
     pos,
     handle,
+    onClick,
+    className,
     children
 }: Readonly<DraggableDivProps>) {
     const [dragging, setDragging] = useState(false);
@@ -30,6 +34,9 @@ export default function DraggableDiv({
 
         setDragging(true);
 
+        if (onClick) {
+            onClick(e);
+        }
         // Prevent text selection or default actions
         e.preventDefault();
     }, [pos, ref]);
@@ -88,7 +95,7 @@ export default function DraggableDiv({
 
     return (
         <div
-            className="absolute select-none"
+            className={"absolute select-none " + (className ?? "") }
             ref={ref}
             style={{
                 transform: `translate(${pos.current.x}px, ${pos.current.y}px)`,
