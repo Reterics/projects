@@ -55,3 +55,7 @@ body {
 .dialog-modal.active {
     z-index: 500;
 }
+
+.confirmation-modal {
+    z-index: 501;
+}

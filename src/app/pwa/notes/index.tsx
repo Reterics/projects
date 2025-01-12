@@ -47,8 +47,8 @@ import {confirm} from "@/app/components/confirm";
 export interface NoteType extends IDBData {
     content?: string
     name: string
-    excerpt?: string
-    group?: string
+    group?: string,
+    timeLabel?: string
 }
 
 export interface NoteMenuProps {
@@ -275,6 +275,24 @@ export function NoteBrowser({notes, setNoteAction, syncNotesAction, saveNoteActi
             [group]: !prev[group],
         }));
     };
+
+    notes.sort((a, b) => Number(b.updated) - Number(a.updated));
+    const today = new Date();
+    notes.forEach((note: NoteType) => {
+        const updatedDate = new Date(note.updated);
+        const isSameDay =
+            updatedDate.getFullYear() === today.getFullYear() &&
+            updatedDate.getMonth() === today.getMonth() &&
+            updatedDate.getDate() === today.getDate();
+
+        if (isSameDay) {
+            note.timeLabel = updatedDate.toISOString().split('T')[1].substring(0,5)
+        } else {
+            note.timeLabel = new Date(note.updated).toISOString().split('T')[0].substring(2)
+        }
+    })
+
+
     const groupedNotes = notes.reduce<Record<string, NoteType[]>>((acc, note) => {
         // Optional: default to "No Group" if the note.group is blank or not defined
         const groupName = note.group?.trim() ? note.group.trim() : "(none)";
@@ -306,7 +324,7 @@ export function NoteBrowser({notes, setNoteAction, syncNotesAction, saveNoteActi
         }
     }
 
-    return <div className='flex flex-col overflow-y-auto min-w-40 border-e-2 border-zinc-200'>
+    return <div className='flex flex-col overflow-y-auto min-w-64 border-e-2 border-zinc-200'>
 
         <div className="flex flex-row">
             <button
@@ -353,22 +371,22 @@ export function NoteBrowser({notes, setNoteAction, syncNotesAction, saveNoteActi
                                 </button>
 
                                 {!isCollapsed && (
-                                    <div className="ml-4 border-s">
+                                    <div className="border-s">
 
                                         {groupNoteList.map((note) => (
                                             <div
-                                                className="p-1 flex flex-row justify-between border-b-2 border-zinc-200 hover:border-zinc-400 hover:bg-zinc-100"
+                                                className="p-1 ps-4 flex flex-row justify-between border-b-2 border-zinc-200 hover:border-zinc-400 hover:bg-zinc-100"
                                                 key={"note_" + note.id}
                                             >
                                                 <button className="w-full text-left"
                                                         onClick={() => setNoteAction(note)}>
                                                     <div className="font-semibold">{note.name}</div>
                                                     <div className="ps-2">
-                                                        {note.excerpt ??
-                                                            note.content
+                                                        <span className='font-medium text-sm me-1'>{note.timeLabel}</span>
+                                                        {note.content
                                                                 ?.split("</p>")[0]
                                                                 .replace(/<p>/g, "")
-                                                                .substring(0, 10)}
+                                                                .substring(0, 15)}
                                                         ...
                                                     </div>
                                                 </button>
@@ -449,7 +467,6 @@ export function NoteEditor({note, saveAction, removeAction, leftSideAction, back
                 const lineBreak = text.indexOf("\n");
                 const nameEnd = lineBreak <= 1 ? 10 : lineBreak;
                 note.name = text.substring(0, nameEnd);
-                note.excerpt = text.substring(nameEnd + 1, nameEnd + 11)
                 saveAction(note)
             }}
             removeAction={removeAction}
@@ -549,12 +566,16 @@ export default function Notes() {
 
     const removeNoteAction = async () => {
         if (note?.id) {
-            await store.current?.remove(note.id, 'notes');
-            await fireStore.current?.remove(note.id, 'notes');
+            const response = await confirm(
+                "IMPORTANT: Are you sure to completely delete this note: " + note.name + "?"
+            );
+            if (response) {
+                await store.current?.remove(note.id, 'notes');
+                await fireStore.current?.remove(note.id, 'notes');
+                toast('Note Removed');
+                setNote(getEmptyNote());
 
-            toast('Note Removed');
-
-            setNote(getEmptyNote());
+            }
         }
     }
 

@@ -27,7 +27,7 @@ export default function ConfirmDialog({
     });
 
     return (
-        <DraggableDiv ref={dialogRef} pos={posRef} handle='.title-bar'>
+        <DraggableDiv ref={dialogRef} pos={posRef} handle='.title-bar' className='confirmation-modal'>
             <div className={windowClasses + ' w-full h-full min-w-80'}>
                 <div className={`title-bar ${titleBarClasses}`}>
                     <div className="flex items-center space-x-2 ml-1">
