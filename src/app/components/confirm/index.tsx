@@ -2,7 +2,7 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 import ConfirmDialog from "./ConfirmDialog";
 
-export function confirm(message: React.ReactNode): Promise<boolean> {
+export function confirm(message: React.ReactNode, options?: {confirmMessage?: string, cancelMessage?: string}): Promise<HTMLElement|boolean> {
     return new Promise((resolve) => {
         const container = document.createElement("div");
         document.body.appendChild(container);
@@ -13,8 +13,8 @@ export function confirm(message: React.ReactNode): Promise<boolean> {
             container.remove();
         };
 
-        const handleConfirm = () => {
-            resolve(true);
+        const handleConfirm = (target: HTMLElement|null) => {
+            resolve(target||true);
             cleanup();
         };
 
@@ -28,6 +28,8 @@ export function confirm(message: React.ReactNode): Promise<boolean> {
                 message={message}
                 onConfirm={handleConfirm}
                 onCancel={handleCancel}
+                confirmMessage={options?.confirmMessage}
+                cancelMessage={options?.cancelMessage}
             /></div>
         );
     });

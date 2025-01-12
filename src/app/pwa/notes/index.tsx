@@ -18,10 +18,10 @@ import {
     BsArrowRepeat,
     BsCaretLeft, BsCaretRight,
     BsChevronDoubleLeft,
-    BsChevronDoubleRight,
+    BsChevronDoubleRight, BsChevronDown, BsChevronRight,
     BsCode,
     BsCodeSquare,
-    BsFloppy,
+    BsFloppy, BsFolderPlus,
     BsHr,
     BsListOl,
     BsListUl,
@@ -48,6 +48,7 @@ export interface NoteType extends IDBData {
     content?: string
     name: string
     excerpt?: string
+    group?: string
 }
 
 export interface NoteMenuProps {
@@ -265,7 +266,47 @@ export function NoteBrowser({notes, setNoteAction, syncNotesAction, saveNoteActi
 }>) {
     const [loading, setLoading] = useState<boolean>(false);
 
-    return <div className='flex flex-col overflow-y-auto min-w-32 border-e-2 border-zinc-200'>
+    const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
+    const [emptyGroups, setEmptyGroups] = useState<string[]>([])
+
+    const toggleGroup = (group: string) => {
+        setExpandedGroups((prev) => ({
+            ...prev,
+            [group]: !prev[group],
+        }));
+    };
+    const groupedNotes = notes.reduce<Record<string, NoteType[]>>((acc, note) => {
+        // Optional: default to "No Group" if the note.group is blank or not defined
+        const groupName = note.group?.trim() ? note.group.trim() : "(none)";
+        if (!acc[groupName]) {
+            acc[groupName] = [];
+        }
+        acc[groupName].push(note);
+        return acc;
+    }, {});
+    if (emptyGroups.length) {
+        emptyGroups.forEach((group) => groupedNotes[group] = []);
+    }
+
+    const addFolder = async () => {
+        const folderInput = <div className='flex flex-row w-full justify-between'>
+            <label htmlFor='folder' className='w-1/3 content-center'>Folder: </label>
+            <input type='text' name='folder' id='folder' className='folder h-8 w-2/3 border border-zinc-200 p-1'/>
+        </div>
+        const response = await confirm(folderInput, {
+            confirmMessage: 'Add',
+            cancelMessage: 'Cancel',
+        });
+
+        if (response instanceof HTMLElement) {
+            const folderName = (response.querySelector('input.folder') as HTMLInputElement)?.value;
+            if (folderName && !emptyGroups.includes(folderName)) {
+                setEmptyGroups([...emptyGroups, folderName])
+            }
+        }
+    }
+
+    return <div className='flex flex-col overflow-y-auto min-w-40 border-e-2 border-zinc-200'>
 
         <div className="flex flex-row">
             <button
@@ -285,44 +326,84 @@ export function NoteBrowser({notes, setNoteAction, syncNotesAction, saveNoteActi
             <button
                 key={"note_add"}
                 className='flex flex-row items-center place-content-center w-full p-2 border-b-2 border-s border-zinc-200 hover:bg-gray-200'
-                onClick={() => setNoteAction(getEmptyNote())}
+                onClick={() => addFolder()}
             >
-                <BsPlusLg className={"text-lg mr-1"}/>
+                <BsFolderPlus className={"text-lg mr-1"}/>
             </button>
         </div>
 
         <div className="flex flex-1 flex-col">
-            {notes.map((note) =>
-                <div
-                    className="p-1 flex flex-row justify-between border-b-2 border-zinc-200 hover:border-zinc-400 hover:bg-zinc-100"
-                    key={"note_" + note.id}
-                >
-                    <button
-                        className='w-full'
-                        onClick={() => setNoteAction(note)}
-                    >
-                        <div className="text-left font-semibold">{note.name}</div>
-                        <div className="ps-2">{note.excerpt ?? note.content?.split('</p>')[0]
-                            .replace(/<p>/g, '')
-                            .substring(0, 10)}...
-                        </div>
-                    </button>
-                    <button
-                        onClick={async ()=> {
-                            const response = await confirm('Are you sure to delete this note: ' + note.name + '  ?')
-                            if (response) {
-                                await saveNoteAction({
-                                    ...note,
-                                    deleted: true
-                                });
-                                setNoteAction(getEmptyNote())
-                            }
-                        }}
-                        className="transition ease-in-out text-zinc-600 hover:text-red-600"
-                    >
-                        <BsTrash />
-                    </button>
-                </div>
+            {(
+                <>
+                    {Object.keys(groupedNotes).map((group) => {
+                        const groupNoteList = groupedNotes[group] ?? [];
+                        const isCollapsed = !expandedGroups[group];
+
+                        return (
+                            <div key={group}>
+                                <button
+                                    className="w-full flex flex-row items-center bg-gray-100 hover:bg-gray-200 px-2 py-1 font-semibold"
+                                    onClick={() => toggleGroup(group)}
+                                >
+                                    {isCollapsed ? <BsChevronRight className="mr-2" /> : <BsChevronDown className="mr-2" />}
+                                    <span>{group}</span>
+                                    <span className="ml-auto text-sm text-gray-500">
+                      ({groupNoteList.length})
+                    </span>
+                                </button>
+
+                                {!isCollapsed && (
+                                    <div className="ml-4 border-s">
+
+                                        {groupNoteList.map((note) => (
+                                            <div
+                                                className="p-1 flex flex-row justify-between border-b-2 border-zinc-200 hover:border-zinc-400 hover:bg-zinc-100"
+                                                key={"note_" + note.id}
+                                            >
+                                                <button className="w-full text-left"
+                                                        onClick={() => setNoteAction(note)}>
+                                                    <div className="font-semibold">{note.name}</div>
+                                                    <div className="ps-2">
+                                                        {note.excerpt ??
+                                                            note.content
+                                                                ?.split("</p>")[0]
+                                                                .replace(/<p>/g, "")
+                                                                .substring(0, 10)}
+                                                        ...
+                                                    </div>
+                                                </button>
+                                                <button
+                                                    onClick={async () => {
+                                                        const response = await confirm(
+                                                            "Are you sure to delete this note: " + note.name + "?"
+                                                        );
+                                                        if (response) {
+                                                            await saveNoteAction({
+                                                                ...note,
+                                                                deleted: true,
+                                                            });
+                                                            setNoteAction(getEmptyNote());
+                                                        }
+                                                    }}
+                                                    className="transition ease-in-out text-zinc-600 hover:text-red-600"
+                                                >
+                                                    <BsTrash/>
+                                                </button>
+                                            </div>
+                                        ))}
+
+                                        <div
+                                            className="p-1 flex hover:bg-zinc-100 place-content-center place-items-center cursor-pointer border-b-2 border-zinc-200 hover:border-zinc-400"
+                                        >
+                                            <BsPlusLg className={"text-lg mr-1"}/> Add
+
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
+                </>
             )}
         </div>
 
