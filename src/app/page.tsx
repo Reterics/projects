@@ -40,6 +40,34 @@ export default function Home() {
 
     const onCreateAction = (runningApp: RunningApp) => {
         setApps(prevApps => {
+            const pattern = /^(.*)\s\((\d+)\)$/;
+            const prevApp = prevApps.find(a => a.label === runningApp.label);
+
+            let label = runningApp.label;
+
+            const index = Math.max(...prevApps
+                .map(a => {
+                    const match = RegExp(pattern).exec(a.label);
+                    if (!label && match?.[1]) {
+                        label = match[1];
+                    }
+                    if (match?.[2]) {
+                        const numeric = Number.parseInt(match[2], 10);
+                        if (!Number.isNaN(numeric) && numeric) {
+                            return numeric;
+                        }
+                    }
+                    return 0;
+                }));
+
+            if (prevApp) {
+                if (!Number.isNaN(index) && index && index !== Infinity && index !== -Infinity) {
+                    runningApp.label = prevApp.label + ' (' + (index + 1) + ')'
+                } else {
+                    runningApp.label = prevApp.label + ' (1)'
+                }
+            }
+
             return [...prevApps, runningApp];
         })
     };
@@ -81,8 +109,8 @@ export default function Home() {
                     .map((app, index)=>
                         <Dialog key={'app_' + app.id + '_' + index}
                                 title={app.label}
-                                initialX={(window.innerWidth / 2) - (app.width ?? window.innerWidth / 2) / 2}
-                                initialY={(window.innerHeight / 2) - (app.height ?? window.innerHeight * 0.4) / 2}
+                                initialX={(window.innerWidth / 2) - (app.width ?? window.innerWidth / 2) / 2 + index * 24}
+                                initialY={(window.innerHeight / 2) - (app.height ?? window.innerHeight * 0.4) / 2 + index * 24}
                                 initialWidth={app.width ?? window.innerWidth / 2}
                                 initialHeight={app.height ?? window.innerHeight * 0.4}
                                 onClose={() => setApps((prevApps) => prevApps.filter(a => a !== app))}

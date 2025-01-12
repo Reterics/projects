@@ -1,7 +1,6 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react';
-import { Resizable } from 're-resizable';
-import DraggableDiv from "@/app/components/DraggableDiv.tsx";
-import { BsCopy, BsDashLg, BsSquare, BsXLg} from "react-icons/bs";
+import {Rnd} from "react-rnd";
+import {BsCopy, BsDashLg, BsSquare, BsXLg} from "react-icons/bs";
 
 export interface DialogProps {
     title?: string
@@ -86,10 +85,11 @@ export default function Dialog({
     const isMinimized = height < 33 && width < 151;
     const isMaximized = parent && parent.offsetHeight === height && parent.offsetWidth === width;
 
-    const onClick = () => {
-        if (!dialogRef.current?.classList.contains('active')) {
+    const focusDialog = () => {
+        const dialog = dialogRef.current?.parentElement as HTMLElement|null;
+        if (!dialog?.classList.contains('active')) {
             document.querySelectorAll('.dialog-modal').forEach((element) => {
-                if (element !== dialogRef.current) {
+                if (element !== dialog) {
                     element.classList.remove('active');
                 } else {
                     element.classList.add('active');
@@ -98,87 +98,87 @@ export default function Dialog({
         }
     };
 
+    useEffect(() => {
+        focusDialog()
+    }, []);
+
     return (
-        <DraggableDiv ref={dialogRef} pos={posRef} handle='.title-bar' className="dialog-modal" onClick={onClick}>
-            <div
-                style={{ width: width, height: height }}
-                className="absolute z-40"
-            >
-                <Resizable
-                    enable={{
-                        bottom: true,
-                        bottomRight: true,
-                        right: true,
-                    }}
-                    size={{ width: width, height: height }}
-                    onResizeStop={(e, direction, ref, d) => {
-                        setHeight(height + d.height)
-                        setWidth(width + d.width)
-                    }}
-                >
-                    <div className={windowClasses} style={{ width: '100%', height: '100%' }}>
-                        <div className={`title-bar ${titleBarClasses}`}>
-                            <div className="flex items-center space-x-2 ml-1">
-                                <span className="font-bold text-sm">{title}</span>
-                            </div>
-                            <div className="flex items-center">
-                                <button className={minimizeButtonClasses} onClick={() => {
-                                    if (isMinimized) {
-                                        setHeight(previous.current.height);
-                                        setWidth(previous.current.width);
-                                        if (posRef.current) {
-                                            posRef.current.x = previous.current.position.x;
-                                            posRef.current.y = previous.current.position.y;
-                                        }
-                                    } else {
-                                        updatePrevious();
-                                        setHeight(32);
-                                        setWidth(150);
-                                    }
-                                }} title="Minimize">
-                                    {isMinimized && <BsCopy />}
-                                    {!isMinimized && <BsDashLg />}
-                                </button>
-                                <button className={maximizeButtonClasses} onClick={() => {
-                                    const parent = dialogRef.current?.parentElement;
-                                    if (parent) {
-                                        if (parent.offsetHeight === height && parent.offsetWidth === width) {
-                                            setHeight(previous.current.height);
-                                            setWidth(previous.current.width);
-                                            if (posRef.current) {
-                                                posRef.current.x = previous.current.position.x;
-                                                posRef.current.y = previous.current.position.y;
-                                            }
-                                        } else {
-                                            updatePrevious();
-
-                                            setHeight(parent.offsetHeight);
-                                            setWidth(parent.offsetWidth);
-                                            if (posRef.current) {
-                                                posRef.current.x = 0;
-                                                posRef.current.y = 0;
-                                            }
-                                        }
-
-                                    }
-                                }} title="Maximize">
-                                    {isMaximized && <BsCopy />}
-                                    {!isMaximized && <BsSquare />}
-                                </button>
-                                <button className={controlButtonClasses} onClick={onClose} title="Close">
-                                    <BsXLg />
-                                </button>
-                            </div>
-                        </div>
-
-                        <div className="flex-1 overflow-auto" style={{
-                            display: height < 64 ? 'none' : 'flex'
-                        }}>
-                            {children}
-                        </div>
+        <Rnd
+            bounds="window"
+             default={{
+                ...posRef.current,
+                width: width,
+                height: height
+            }}
+             dragHandleClassName='title-bar'
+             className="dialog-modal z-40"
+             enableUserSelectHack={true}
+             onResizeStop={(_e, _dir, _elementRef, delta) => {
+                 setHeight(height + delta.height)
+                 setWidth(width + delta.width)
+             }}
+        >
+            <div ref={dialogRef} className={windowClasses + ' w-full h-full'}>
+                <div className={`title-bar ${titleBarClasses}`} onClick={focusDialog}>
+                    <div className="flex items-center space-x-2 ml-1">
+                        <span className="font-bold text-sm">{title}</span>
                     </div>
-                </Resizable>
+                    <div className="flex items-center">
+                        <button className={minimizeButtonClasses} onClick={() => {
+                            if (isMinimized) {
+                                setHeight(previous.current.height);
+                                setWidth(previous.current.width);
+                                if (posRef.current) {
+                                    posRef.current.x = previous.current.position.x;
+                                    posRef.current.y = previous.current.position.y;
+                                }
+                            } else {
+                                updatePrevious();
+                                setHeight(32);
+                                setWidth(150);
+                            }
+                        }} title="Minimize">
+                            {isMinimized && <BsCopy />}
+                            {!isMinimized && <BsDashLg />}
+                        </button>
+                        <button className={maximizeButtonClasses} onClick={() => {
+                            const parent = dialogRef.current?.parentElement;
+                            if (parent) {
+                                if (parent.offsetHeight === height && parent.offsetWidth === width) {
+                                    setHeight(previous.current.height);
+                                    setWidth(previous.current.width);
+                                    if (posRef.current) {
+                                        posRef.current.x = previous.current.position.x;
+                                        posRef.current.y = previous.current.position.y;
+                                    }
+                                } else {
+                                    updatePrevious();
+
+                                    setHeight(parent.offsetHeight);
+                                    setWidth(parent.offsetWidth);
+                                    if (posRef.current) {
+                                        posRef.current.x = 0;
+                                        posRef.current.y = 0;
+                                    }
+                                }
+
+                            }
+                        }} title="Maximize">
+                            {isMaximized && <BsCopy />}
+                            {!isMaximized && <BsSquare />}
+                        </button>
+                        <button className={controlButtonClasses} onClick={onClose} title="Close">
+                            <BsXLg />
+                        </button>
+                    </div>
+                </div>
+
+                <div className="flex-1 overflow-auto" style={{
+                    display: height < 64 ? 'none' : 'flex'
+                }}>
+                    {children}
+                </div>
             </div>
-        </DraggableDiv>
+        </Rnd>
     );
 }
