@@ -386,6 +386,7 @@ export function NoteBrowser({notes, setNoteAction, syncNotesAction, saveNoteActi
                                                         {note.content
                                                                 ?.split("</p>")[0]
                                                                 .replace(/<p>/g, "")
+                                                                .replace(/<[^>]*>/g, "")
                                                                 .substring(0, 15)}
                                                         ...
                                                     </div>
@@ -473,7 +474,7 @@ export function NoteEditor({note, saveAction, removeAction, leftSideAction, back
             leftSideAction={leftSideAction}
             backAction={backAction}
         />
-        <EditorContent editor={editor} className='h-full px-1'/>
+        <EditorContent editor={editor} className='h-full px-1 overflow-auto'/>
     </div>
 }
 
@@ -579,7 +580,7 @@ export default function Notes() {
         }
     }
 
-    return <div className='flex flex-row h-full w-full'>
+    return <div className='flex flex-row h-full w-full overflow-hidden'>
         {sidebarOpen && <NoteBrowser
             notes={notes}
             setNoteAction={setNoteAction}

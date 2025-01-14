@@ -5,6 +5,9 @@ module.exports = {
 		"./src/**/*.{js,ts,jsx,tsx,mdx}"
 	],
   theme: {
+    fontFamily: {
+        'display': ['Oswald', 'sans-serif'],
+    },
   	extend: {
   		borderRadius: {
   			lg: 'var(--radius)',
