@@ -1,22 +1,26 @@
-import React, {useEffect, useRef, useState} from "react";
+import React, { useEffect, useRef, useState } from 'react';
 
 export interface TerminalProps {
     welcomeMessage?: string;
     username?: string;
 }
 
-export default function PTerminal ({welcomeMessage, username}: Readonly<TerminalProps>) {
+export default function PTerminal({
+    welcomeMessage,
+    username,
+}: Readonly<TerminalProps>) {
     const [lines, setLines] = useState<string[]>(() =>
-        welcomeMessage ? [welcomeMessage] : ["Welcome to Projects Framework"]
+        welcomeMessage ? [welcomeMessage] : ['Welcome to Projects Framework']
     );
     const [command, setCommand] = useState<string>('');
     const terminalRef = useRef<HTMLDivElement>(null);
 
-    const userPrompt = (username ?? 'root') + "projects $";
+    const userPrompt = (username ?? 'root') + 'projects $';
 
     const commandHandler = (input: string) => {
         const argsIndex = input.indexOf(' ');
-        const baseCommand = argsIndex !== -1 ? input.substring(0, argsIndex) : input.trim();
+        const baseCommand =
+            argsIndex !== -1 ? input.substring(0, argsIndex) : input.trim();
 
         let response: string | null = null;
 
@@ -30,7 +34,11 @@ export default function PTerminal ({welcomeMessage, username}: Readonly<Terminal
                 break;
 
             case 'clear':
-                setLines(welcomeMessage ? [welcomeMessage] : ["Welcome to Projects Framework"]);
+                setLines(
+                    welcomeMessage
+                        ? [welcomeMessage]
+                        : ['Welcome to Projects Framework']
+                );
                 return;
 
             default:
@@ -41,9 +49,9 @@ export default function PTerminal ({welcomeMessage, username}: Readonly<Terminal
         }
 
         if (response) {
-            setLines(prev => [...prev, `${userPrompt} ${input}`, response]);
+            setLines((prev) => [...prev, `${userPrompt} ${input}`, response]);
         } else if (input.trim() !== '') {
-            setLines(prev => [...prev, `${userPrompt} ${input}`]);
+            setLines((prev) => [...prev, `${userPrompt} ${input}`]);
         }
     };
 
@@ -61,23 +69,22 @@ export default function PTerminal ({welcomeMessage, username}: Readonly<Terminal
         }
     }, [lines]);
 
-
     return (
         <div
-            className="bg-zinc-100 overflow-y-auto h-full w-full p-1 font-mono pe-0"
+            className='bg-zinc-100 overflow-y-auto h-full w-full p-1 font-mono pe-0'
             ref={terminalRef}
         >
             {lines.map((line, idx) => (
                 <div key={idx}>{line}</div>
             ))}
-            <div className="flex flex-row w-full">
-                <div className="flex whitespace-nowrap me-1">{userPrompt} </div>
+            <div className='flex flex-row w-full'>
+                <div className='flex whitespace-nowrap me-1'>{userPrompt} </div>
                 <input
-                    type="text"
+                    type='text'
                     value={command}
                     onChange={(e) => setCommand(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    className="bg-zinc-100 w-full"
+                    className='bg-zinc-100 w-full'
                     style={{
                         border: 'none',
                         outline: 'none',

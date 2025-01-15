@@ -2,11 +2,10 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { Readable } from 'stream';
 
 interface ActivePWACollection {
-    [key: string]: string
+    [key: string]: string;
 }
 
-const activePWAs:ActivePWACollection = {};
-
+const activePWAs: ActivePWACollection = {};
 
 function streamToNodeStream(stream: ReadableStream) {
     const reader = stream.getReader();
@@ -22,16 +21,18 @@ function streamToNodeStream(stream: ReadableStream) {
     });
 }
 
-
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(
+    req: NextApiRequest,
+    res: NextApiResponse
+) {
     const { path = [], url } = req.query; // Catch-all path
     const referer = req.headers.referer;
     const rawCookies = req.headers.cookie || '';
 
-
-
     if ((!url || typeof url !== 'string') && !referer) {
-        res.status(400).json({ error: 'Missing or invalid "url" query parameter and missing Referer header.' });
+        res.status(400).json({
+            error: 'Missing or invalid "url" query parameter and missing Referer header.',
+        });
         return;
     }
 
@@ -40,8 +41,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (referer && !(path.length === 1 && path[0] === 'proxy')) {
         let cookieUrl;
-        rawCookies.split('; ').forEach(cookie => {
-            const [key, value] = cookie.split('=');
+        rawCookies.split('; ').forEach((cookie) => {
+            const value = cookie.split('=')[1];
             const decodedUrl = decodeURIComponent(value);
             if (referer === decodedUrl) {
                 cookieUrl = decodedUrl;
@@ -56,12 +57,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 targetUrl = new URL(baseSubUrl);
                 targetUrl.pathname = `/${(path as string[]).join('/')}`;
                 targetUrl.search = req.url?.split('?')[1] ?? ''; //
-                baseUrl = targetUrl.toString()
+                baseUrl = targetUrl.toString();
             }
         }
-
     } else {
-        rawCookies.split('; ').forEach(cookie => {
+        rawCookies.split('; ').forEach((cookie) => {
             const [key, value] = cookie.split('=');
             const decodedUrl = decodeURIComponent(value);
             if (url === decodedUrl) {
@@ -110,13 +110,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     try {
-
         const response = await fetch(baseUrl, {
             method: req.method, // Forward the request method
             headers: headers,
-            body: body
+            body: body,
         });
-
 
         // Set the response headers
         res.status(response.status);
@@ -150,7 +148,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
     } catch (error) {
         console.error('Error fetching proxy content:', error);
-        console.error((error as Error).stack)
+        console.error((error as Error).stack);
         res.status(500).json({ error: 'Failed to fetch content.' });
     }
 }

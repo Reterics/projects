@@ -1,10 +1,13 @@
-import React from "react";
-import { createRoot } from "react-dom/client";
-import ConfirmDialog from "./ConfirmDialog";
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+import ConfirmDialog from './ConfirmDialog';
 
-export function confirm(message: React.ReactNode, options?: {confirmMessage?: string, cancelMessage?: string}): Promise<HTMLElement|boolean> {
+export function confirm(
+    message: React.ReactNode,
+    options?: { confirmMessage?: string; cancelMessage?: string }
+): Promise<HTMLElement | boolean> {
     return new Promise((resolve) => {
-        const container = document.createElement("div");
+        const container = document.createElement('div');
         document.body.appendChild(container);
         const root = createRoot(container);
 
@@ -13,8 +16,8 @@ export function confirm(message: React.ReactNode, options?: {confirmMessage?: st
             container.remove();
         };
 
-        const handleConfirm = (target: HTMLElement|null) => {
-            resolve(target||true);
+        const handleConfirm = (target: HTMLElement | null) => {
+            resolve(target || true);
             cleanup();
         };
 
@@ -24,13 +27,15 @@ export function confirm(message: React.ReactNode, options?: {confirmMessage?: st
         };
 
         root.render(
-            <div className="top-0 left-0 absolute"><ConfirmDialog
-                message={message}
-                onConfirm={handleConfirm}
-                onCancel={handleCancel}
-                confirmMessage={options?.confirmMessage}
-                cancelMessage={options?.cancelMessage}
-            /></div>
+            <div className='top-0 left-0 absolute'>
+                <ConfirmDialog
+                    message={message}
+                    onConfirm={handleConfirm}
+                    onCancel={handleCancel}
+                    confirmMessage={options?.confirmMessage}
+                    cancelMessage={options?.cancelMessage}
+                />
+            </div>
         );
     });
 }

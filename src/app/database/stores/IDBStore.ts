@@ -1,13 +1,17 @@
-import DBModel, {IDBCollection, IDBData} from "../DBModel";
+import DBModel, { IDBCollection, IDBData } from '../DBModel';
 
-function openIDB(databaseName: string, version: number, storeNames: string[]): Promise<IDBDatabase> {
+function openIDB(
+    databaseName: string,
+    version: number,
+    storeNames: string[]
+): Promise<IDBDatabase> {
     return new Promise((resolve, reject) => {
         const request = indexedDB.open(databaseName, version);
         request.onupgradeneeded = () => {
             const db = request.result;
             for (const storeName of storeNames) {
                 if (!db.objectStoreNames.contains(storeName)) {
-                    db.createObjectStore(storeName, { keyPath: "id" });
+                    db.createObjectStore(storeName, { keyPath: 'id' });
                 }
             }
         };
@@ -34,7 +38,6 @@ async function runTransaction(transaction: IDBTransaction): Promise<void> {
     });
 }
 
-
 function getSmallerID(currentID: string): string {
     const match = RegExp(/(.*?)(\d+)$/).exec(currentID);
     if (match) {
@@ -55,7 +58,6 @@ function getLargerID(currentID: string): string {
     return `Z${currentID}`;
 }
 
-
 export default class IDBStore extends DBModel {
     protected _db: IDBDatabase | null = null;
     protected _version = 2;
@@ -69,16 +71,16 @@ export default class IDBStore extends DBModel {
     async load(): Promise<IDBCollection> {
         const db = await this.getDB();
         for (const table of this._tables) {
-            const transaction = db.transaction(table, "readonly");
+            const transaction = db.transaction(table, 'readonly');
             const store = transaction.objectStore(table);
-            this._data[table] = await runRequest(store.getAll()) as IDBData[];
+            this._data[table] = (await runRequest(store.getAll())) as IDBData[];
         }
         return this._data;
     }
 
     async saveTable(table: string, _db?: IDBDatabase): Promise<void> {
-        const db = _db || await this.getDB();
-        const transaction = db.transaction(table, "readwrite");
+        const db = _db || (await this.getDB());
+        const transaction = db.transaction(table, 'readwrite');
         const store = transaction.objectStore(table);
 
         const clearRequest = store.clear();
@@ -117,11 +119,11 @@ export default class IDBStore extends DBModel {
             }
         }
         data.updated = new Date().getTime();
-        await DBModel.encryptDoc(data).catch(e=>console.error(e));
+        await DBModel.encryptDoc(data).catch((e) => console.error(e));
         this._data[table].push(data);
 
         const db = await this.getDB();
-        const transaction = db.transaction(table, "readwrite");
+        const transaction = db.transaction(table, 'readwrite');
         const store = transaction.objectStore(table);
         store.put(data);
 
@@ -138,7 +140,7 @@ export default class IDBStore extends DBModel {
         const [removed] = items.splice(idx, 1);
 
         const db = await this.getDB();
-        const transaction = db.transaction(table, "readwrite");
+        const transaction = db.transaction(table, 'readwrite');
         const store = transaction.objectStore(table);
 
         await runRequest(store.delete(id));
@@ -158,11 +160,11 @@ export default class IDBStore extends DBModel {
             }
         }
         data.updated = new Date().getTime();
-        await DBModel.encryptDoc(data).catch(e=>console.error(e));
+        await DBModel.encryptDoc(data).catch((e) => console.error(e));
         this._data[table].unshift(data);
 
         const db = await this.getDB();
-        const transaction = db.transaction(table, "readwrite");
+        const transaction = db.transaction(table, 'readwrite');
         const store = transaction.objectStore(table);
         store.put(data);
 
@@ -179,11 +181,11 @@ export default class IDBStore extends DBModel {
 
         items[idx] = data;
         items[idx].updated = new Date().getTime();
-        await DBModel.encryptDoc(items[idx]).catch(e=>console.error(e));
+        await DBModel.encryptDoc(items[idx]).catch((e) => console.error(e));
         const updatedItem = items[idx];
 
         const db = await this.getDB();
-        const transaction = db.transaction(table, "readwrite");
+        const transaction = db.transaction(table, 'readwrite');
         const store = transaction.objectStore(table);
         store.put(updatedItem);
 
@@ -191,5 +193,4 @@ export default class IDBStore extends DBModel {
 
         return updatedItem;
     }
-
 }

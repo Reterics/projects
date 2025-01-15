@@ -28,11 +28,14 @@ export const CookieManager = {
     },
 
     get: (name: string): string | undefined => {
-        const cookies = document.cookie.split('; ').reduce((acc, cookie) => {
-            const [key, value] = cookie.split('=');
-            acc[decodeURIComponent(key)] = decodeURIComponent(value);
-            return acc;
-        }, {} as Record<string, string>);
+        const cookies = document.cookie.split('; ').reduce(
+            (acc, cookie) => {
+                const [key, value] = cookie.split('=');
+                acc[decodeURIComponent(key)] = decodeURIComponent(value);
+                return acc;
+            },
+            {} as Record<string, string>
+        );
         return cookies[name];
     },
 
@@ -41,10 +44,13 @@ export const CookieManager = {
     },
 
     getAll: (): Record<string, string> => {
-        return document.cookie.split('; ').reduce((acc, cookie) => {
-            const [key, value] = cookie.split('=');
-            acc[decodeURIComponent(key)] = decodeURIComponent(value);
-            return acc;
-        }, {} as Record<string, string>);
-    }
+        return document.cookie.split('; ').reduce(
+            (acc, cookie) => {
+                const [key, value] = cookie.split('=');
+                acc[decodeURIComponent(key)] = decodeURIComponent(value);
+                return acc;
+            },
+            {} as Record<string, string>
+        );
+    },
 };

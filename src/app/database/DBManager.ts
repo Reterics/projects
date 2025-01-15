@@ -1,8 +1,7 @@
-
-export type DBType = 'indexedDB'|'localStorage';
+export type DBType = 'indexedDB' | 'localStorage';
 
 export interface DBManagerProps {
-    db: DBType
+    db: DBType;
 }
 
 export default class DBManager {
@@ -10,5 +9,4 @@ export default class DBManager {
     constructor(options?: DBManagerProps) {
         this._type = options?.db ?? 'indexedDB';
     }
-
 }

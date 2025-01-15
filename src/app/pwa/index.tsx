@@ -1,23 +1,25 @@
-import {BsBook, BsBoxes, BsFillTerminalFill} from "react-icons/bs";
-import PTerminal from "@/app/pwa/pTerminal.tsx";
-import React from "react";
-import Notes from "@/app/pwa/notes";
-import Projects from "@/app/pwa/projects";
-import {MenuBarItem} from "@/app/components/MenuBar.tsx";
-import {RunningApp} from "@/app/page.tsx";
+import { BsBook, BsBoxes, BsFillTerminalFill } from 'react-icons/bs';
+import PTerminal from '@/app/pwa/pTerminal.tsx';
+import React from 'react';
+import Notes from '@/app/pwa/notes';
+import Projects from '@/app/pwa/projects';
+import { MenuBarItem } from '@/app/components/MenuBar.tsx';
+import { RunningApp } from '@/app/page.tsx';
 
-
-export const focusAppById = (id: string)=> {
-    let dialogNode: HTMLElement|null = null;
+export const focusAppById = (id: string) => {
+    let dialogNode: HTMLElement | null = null;
     let maxZIndex = 1;
     for (const node of document.querySelectorAll('.running-app-dialog')) {
         if (node.id === 'app_' + id) {
             dialogNode = node.parentElement as HTMLElement;
         }
 
-        const unitValue = node.parentElement?.computedStyleMap().get('z-index') as CSSUnitValue;
+        const unitValue = node.parentElement
+            ?.computedStyleMap()
+            .get('z-index') as CSSUnitValue;
 
-        const zIndex = unitValue.unit === 'number' ? Number(unitValue.value) : 0;
+        const zIndex =
+            unitValue.unit === 'number' ? Number(unitValue.value) : 0;
         if (zIndex && !Number.isNaN(zIndex) && maxZIndex < zIndex) {
             if (node.id === 'app_' + id) {
                 dialogNode = node.parentElement as HTMLElement;
@@ -35,7 +37,7 @@ export const focusAppById = (id: string)=> {
     }
 };
 
-export const hideAppById = (id: string)=> {
+export const hideAppById = (id: string) => {
     const dialogNode = document.getElementById('app_' + id);
     if (dialogNode?.parentElement) {
         dialogNode.parentElement.style.display = 'none';
@@ -47,7 +49,7 @@ const notes: MenuBarItem = {
     label: 'Notes',
     icon: <BsBook />,
     create: (): RunningApp => {
-        const id = new Date().getTime().toString()
+        const id = new Date().getTime().toString();
         return {
             id,
             label: notes.label,
@@ -56,8 +58,8 @@ const notes: MenuBarItem = {
             focus: () => focusAppById(id),
             onClose: () => hideAppById(id),
             entry: <Notes />,
-        }
-    }
+        };
+    },
 };
 
 const terminal: MenuBarItem = {
@@ -65,7 +67,7 @@ const terminal: MenuBarItem = {
     label: 'Terminal',
     icon: <BsFillTerminalFill />,
     create: () => {
-        const id = new Date().getTime().toString()
+        const id = new Date().getTime().toString();
         return {
             id,
             label: notes.label,
@@ -74,16 +76,16 @@ const terminal: MenuBarItem = {
             focus: () => focusAppById(id),
             onClose: () => hideAppById(id),
             entry: <PTerminal />,
-        }
-    }
-}
+        };
+    },
+};
 
 const projects: MenuBarItem = {
     name: 'projects',
     label: 'Projects',
     icon: <BsBoxes />,
     create: () => {
-        const id = new Date().getTime().toString()
+        const id = new Date().getTime().toString();
         return {
             id,
             label: projects.label,
@@ -92,11 +94,8 @@ const projects: MenuBarItem = {
             focus: () => focusAppById(id),
             onClose: () => hideAppById(id),
             entry: <Projects />,
-        }
-    }
-}
-
-
+        };
+    },
+};
 
 export const pwaItems: MenuBarItem[] = [notes, terminal, projects];
-

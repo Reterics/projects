@@ -1,13 +1,18 @@
-import React, {useState, useRef, useEffect, useCallback, RefObject} from 'react';
-
+import React, {
+    useState,
+    useRef,
+    useEffect,
+    useCallback,
+    RefObject,
+} from 'react';
 
 export interface DraggableDivProps {
-    ref: RefObject<HTMLDivElement|null>;
-    pos: RefObject<{ x: number, y: number }>;
-    handle: string
-    className?: string
-    children?: React.ReactNode,
-    onClick?: (e: MouseEvent) => void,
+    ref: RefObject<HTMLDivElement | null>;
+    pos: RefObject<{ x: number; y: number }>;
+    handle: string;
+    className?: string;
+    children?: React.ReactNode;
+    onClick?: (e: MouseEvent) => void;
 }
 
 export default function DraggableDiv({
@@ -16,30 +21,32 @@ export default function DraggableDiv({
     handle,
     onClick,
     className,
-    children
+    children,
 }: Readonly<DraggableDivProps>) {
     const [dragging, setDragging] = useState(false);
     const offsetRef = useRef({ x: 0, y: 0 });
 
-    const handleMouseDown = useCallback((e: MouseEvent) => {
-        if (e.button !== 0) return;
+    const handleMouseDown = useCallback(
+        (e: MouseEvent) => {
+            if (e.button !== 0) return;
 
-        const rect = ref.current?.getBoundingClientRect();
+            const rect = ref.current?.getBoundingClientRect();
 
-        if (rect) {
-            offsetRef.current.x = e.pageX - pos.current.x ;
-            offsetRef.current.y = e.pageY  - pos.current.y;
-        }
+            if (rect) {
+                offsetRef.current.x = e.pageX - pos.current.x;
+                offsetRef.current.y = e.pageY - pos.current.y;
+            }
 
+            setDragging(true);
 
-        setDragging(true);
-
-        if (onClick) {
-            onClick(e);
-        }
-        // Prevent text selection or default actions
-        e.preventDefault();
-    }, [pos, ref]);
+            if (onClick) {
+                onClick(e);
+            }
+            // Prevent text selection or default actions
+            e.preventDefault();
+        },
+        [onClick, pos, ref]
+    );
 
     useEffect(() => {
         const handleMouseMove = (e: MouseEvent) => {
@@ -58,7 +65,9 @@ export default function DraggableDiv({
                 setDragging(false);
 
                 const transform = ref.current?.style.transform;
-                const match = transform?.match(/translate\(([-0-9.]+)px,\s*([-0-9.]+)px\)/);
+                const match = transform?.match(
+                    /translate\(([-0-9.]+)px,\s*([-0-9.]+)px\)/
+                );
                 if (match) {
                     pos.current.x = parseFloat(match[1]);
                     pos.current.y = parseFloat(match[2]);
@@ -84,18 +93,24 @@ export default function DraggableDiv({
         if (handle && ref.current) {
             const node = ref.current.querySelector(handle);
             if (node) {
-                node.addEventListener('mousedown', handleMouseDown as EventListener);
+                node.addEventListener(
+                    'mousedown',
+                    handleMouseDown as EventListener
+                );
 
                 return () => {
-                    node.removeEventListener('mousedown', handleMouseDown as EventListener);
-                }
+                    node.removeEventListener(
+                        'mousedown',
+                        handleMouseDown as EventListener
+                    );
+                };
             }
         }
     }, [handle, handleMouseDown, ref]);
 
     return (
         <div
-            className={"absolute select-none " + (className ?? "") }
+            className={'absolute select-none ' + (className ?? '')}
             ref={ref}
             style={{
                 transform: `translate(${pos.current.x}px, ${pos.current.y}px)`,
