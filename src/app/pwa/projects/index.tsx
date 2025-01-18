@@ -10,8 +10,11 @@ import Table from '@tiptap/extension-table';
 import TableHeader from '@tiptap/extension-table-header';
 import TableRow from '@tiptap/extension-table-row';
 import TableCell from '@tiptap/extension-table-cell';
-import { NoteMenu } from '@/app/pwa/notes';
-import {BsClipboard2Plus, BsFileEarmark, BsSearch, BsTrash} from 'react-icons/bs';
+import {NoteMenu, NoteType} from '@/app/pwa/notes';
+import {
+    BsArrowClockwise, BsArrowLeftSquare, BsArrowRightSquare, BsArrowUpSquare,
+    BsFileEarmark, BsPencilSquare, BsPlusSquare, BsSearch, BsTrash
+} from 'react-icons/bs';
 import {ContextMenu, useContextMenu} from "@/app/components/contextMenu";
 import ContextMenuEntry from "@/app/components/contextMenu/ContextMenuEntry.tsx";
 
@@ -91,6 +94,19 @@ export function ProjectBrowser({
     const { x, y, visible, openContextMenu, closeContextMenu, contextData } =
         useContextMenu();
     const [filter, setFilter] = useState<string>('');
+    const [path, setPath] = useState<string>('');
+
+    /*const groupedProjects = projects.reduce<Record<string, NoteType[]>>(
+        (acc, note) => {
+            const groupName = note.group?.trim() ? note.group.trim() : '(none)';
+            if (!acc[groupName]) {
+                acc[groupName] = [];
+            }
+            acc[groupName].push(note);
+            return acc;
+        },
+        {}
+    );*/
 
     const handleKeyPress = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
         if (!setFilter || !e.target) {
@@ -101,51 +117,61 @@ export function ProjectBrowser({
         }
     }, [setFilter]);
 
+    const navBarButton = 'text-2xl p-1 px-1.5 hover:bg-zinc-200 cursor-pointer';
+    const navBarInput = 'h-full w-full px-1'
     return (
-        <div>
-            <div className='flex flex-row items-center'>
-                <div className='flex flex-row place-items-center p-1'>
-                    <div className='me-2'>Name</div>
-                    <div className='text-sm font-semibold truncate flex-1 me-2'>
-                        <input ref={nameRef} onKeyUp={handleKeyPress}/>
-                    </div>
-                    <button
-                        className='text-xl me-2'
-                        onClick={() =>
-                            setFilter(nameRef.current?.value ?? '')
-                        }
-                    >
-                        <BsSearch/>
-                    </button>
-                    <button
-                        className='text-xl me-2'
-                        onClick={() =>
-                            setProjectAction({
-                                ...getEmptyProject(),
-                                name: nameRef.current?.value ?? '',
-                            })
-                        }
-                    >
-                        <BsClipboard2Plus/>
-                    </button>
+        <div className='w-full'>
+            <div className='flex flex-row items-center font-normal w-full py-1'>
+                <div className={navBarButton}><BsArrowLeftSquare/></div>
+                <div className={navBarButton}><BsArrowRightSquare/></div>
+                <div className={navBarButton}><BsArrowUpSquare/></div>
+                <div className={navBarButton}><BsArrowClockwise className='place-self-center'/></div>
+
+                <div className='flex flex-1 text-sm font-semibold truncate me-2 border border-zinc-400 h-7' >
+                    <input
+                        className={navBarInput}
+                        value={path}
+                        onChange={(e) => setPath(e.target.value)}/>
                 </div>
+
+                <div className='text-sm font-semibold truncate border border-zinc-400 h-7 max-w-20'>
+                    <input
+                        placeholder='Search...'
+                        className={navBarInput}
+                        ref={nameRef}
+                        onKeyUp={handleKeyPress}/>
+                </div>
+                <button
+                    className='text-lg p-1.5 pe-1 hover:bg-zinc-200 cursor-pointer'
+                    onClick={() =>
+                        setFilter(nameRef.current?.value ?? '')
+                    }
+                >
+                    <BsSearch/>
+                </button>
+                <button className={navBarButton} onClick={() =>
+                    setProjectAction({
+                        ...getEmptyProject(),
+                        name: nameRef.current?.value ?? '',
+                    })
+                }><BsPlusSquare/></button>
             </div>
             <div className='flex flex-wrap gap-4 p-4'>
                 {projects.filter(p => p.name.includes(filter)).map((project) => (
                     <div
-                        className='flex flex-col items-center justify-between border border-zinc-200 p-2 hover:border-zinc-400 hover:bg-zinc-100'
+                        className='flex flex-col items-center justify-between p-2 hover:border-zinc-400 hover:bg-zinc-100'
                         key={'project_' + project.id}
-                        onContextMenu={(event) => openContextMenu(event, project)}
                     >
                         <button
                             className='w-full text-center'
-                            onClick={() => setProjectAction(project)}
+                            onDoubleClick={() => setProjectAction(project)}
+                            onContextMenu={(event) => openContextMenu(event, project)}
                         >
                             <div className='text-6xl text-zinc-500 mb-2'>
-                                <BsFileEarmark />
+                            <BsFileEarmark />
                             </div>
                             <div className='text-sm font-semibold truncate'>
-                                {project.name}
+                                {project.name || <span className='text-zinc-400'>(empty)</span>}
                             </div>
                         </button>
                         <div className='text-xs text-zinc-400'>
@@ -155,8 +181,8 @@ export function ProjectBrowser({
                 ))}
             </div>
             <ContextMenu x={x} y={y} visible={visible} onClose={closeContextMenu}>
-                <ContextMenuEntry icon={<span className="material-icons">edit</span>} onClick={()=>{}}>
-                    Rename
+                <ContextMenuEntry icon={<BsPencilSquare/>} onClick={()=>{}}>
+                    Edit
                 </ContextMenuEntry>
                 <ContextMenuEntry icon={<BsTrash />} onClick={async () => {
                     const project = contextData as ProjectType
