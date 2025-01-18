@@ -63,7 +63,7 @@ export interface NoteMenuProps {
 export const getEmptyNote = (): NoteType => {
     return {
         id: new Date().getTime().toString(),
-        content: '<p><strong>Title</strong></p><p>Start editing...</p>',
+        content: '<p><strong>Title</strong></p><p></p>',
         name: '',
         updated: new Date().getTime(),
     };
@@ -359,11 +359,13 @@ export function NoteBrowser({
     setNoteAction,
     syncNotesAction,
     saveNoteAction,
+    controlSidebar
 }: Readonly<{
     notes: NoteType[];
     setNoteAction: (note: NoteType) => void;
     syncNotesAction: () => Promise<void>;
     saveNoteAction: (note: NoteType) => Promise<void>;
+    controlSidebar?: (sideBarOpen: boolean) => void;
 }>) {
     const [loading, setLoading] = useState<boolean>(false);
 
@@ -446,6 +448,23 @@ export function NoteBrowser({
         }
     };
 
+    const getExcerpt = useCallback((string?: string) => {
+        const lines = string
+            ?.split(
+                '</p>'
+            )
+            .slice(0,3)
+            .map(line => line.replace(
+                /<[^>]*>/g,
+                ''
+            ).trim())
+            .filter(line => line) ?? []
+
+        return (lines[lines.length - 1] || lines[0] || '').substring(
+            0,
+            15
+        );
+    }, [])
     return (
         <div className='flex flex-col overflow-y-auto min-w-64 border-e-2 border-zinc-200'>
             <div className='flex flex-row'>
@@ -522,22 +541,7 @@ export function NoteBrowser({
                                                             <span className='font-medium text-sm me-1'>
                                                                 {note.timeLabel}
                                                             </span>
-                                                            {note.content
-                                                                ?.split(
-                                                                    '</p>'
-                                                                )[0]
-                                                                .replace(
-                                                                    /<p>/g,
-                                                                    ''
-                                                                )
-                                                                .replace(
-                                                                    /<[^>]*>/g,
-                                                                    ''
-                                                                )
-                                                                .substring(
-                                                                    0,
-                                                                    15
-                                                                )}
+                                                            {getExcerpt(note.content)}
                                                             ...
                                                         </div>
                                                     </button>
@@ -569,12 +573,23 @@ export function NoteBrowser({
                                                 </div>
                                             ))}
 
-                                            <div className='p-1 flex hover:bg-zinc-100 place-content-center place-items-center cursor-pointer border-b-2 border-zinc-200 hover:border-zinc-400'>
+                                            <button
+                                                onClick={() => {
+                                                    setNoteAction({
+                                                        ...getEmptyNote(),
+                                                        group
+                                                    });
+                                                    if (controlSidebar) {
+                                                        controlSidebar(false)
+                                                    }
+
+                                                }}
+                                                className='w-full p-1 flex hover:bg-zinc-100 place-content-center place-items-center cursor-pointer border-b-2 border-zinc-200 hover:border-zinc-400'>
                                                 <BsPlusLg
                                                     className={'text-lg mr-1'}
                                                 />{' '}
                                                 Add
-                                            </div>
+                                            </button>
                                         </div>
                                     )}
                                 </div>
@@ -763,6 +778,7 @@ export default function Notes() {
                     setNoteAction={setNoteAction}
                     syncNotesAction={syncNotesAction}
                     saveNoteAction={saveNoteAction}
+                    controlSidebar={setSidebarOpen}
                 />
             )}
             <NoteEditor
