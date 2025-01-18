@@ -7,6 +7,12 @@ export interface IDBData {
     [key: string]: string | number | boolean | undefined | string[];
 }
 
+export interface IDBTextEntry extends IDBData {
+    name: string;
+    content: string;
+    group?: string;
+}
+
 export interface IDBCollection {
     [key: string]: IDBData[] | undefined;
 }

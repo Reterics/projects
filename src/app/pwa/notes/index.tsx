@@ -9,7 +9,7 @@ import { Editor } from '@tiptap/core';
 import './style.scss';
 import IDBStore from '@/app/database/stores/IDBStore.ts';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import DBModel, { IDBData } from '@/app/database/DBModel.ts';
+import DBModel, {IDBTextEntry} from '@/app/database/DBModel.ts';
 import { toast } from 'react-toastify';
 import { FirebaseStore } from '@/app/database/stores/FirebaseStore.ts';
 import {
@@ -48,10 +48,7 @@ import Dropdown from '@/app/components/Dropdown.tsx';
 import { EncryptedData, isEncrypted } from '@/app/utils/crypto.ts';
 import { confirm } from '@/app/components/confirm';
 
-export interface NoteType extends IDBData {
-    content?: string;
-    name: string;
-    group?: string;
+export interface NoteType extends IDBTextEntry {
     timeLabel?: string;
 }
 

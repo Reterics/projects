@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import IDBStore from '@/app/database/stores/IDBStore.ts';
 import { FirebaseStore } from '@/app/database/stores/FirebaseStore.ts';
 import { EncryptedData, isEncrypted } from '@/app/utils/crypto.ts';
-import DBModel, { IDBData } from '@/app/database/DBModel.ts';
+import DBModel, {IDBTextEntry} from '@/app/database/DBModel.ts';
 import { toast } from 'react-toastify';
 import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -11,12 +11,11 @@ import TableHeader from '@tiptap/extension-table-header';
 import TableRow from '@tiptap/extension-table-row';
 import TableCell from '@tiptap/extension-table-cell';
 import { NoteMenu } from '@/app/pwa/notes';
-import { BsFileEarmark, BsFillFloppy2Fill, BsTrash } from 'react-icons/bs';
+import {BsClipboard2Plus, BsFileEarmark, BsSearch, BsTrash} from 'react-icons/bs';
+import {ContextMenu, useContextMenu} from "@/app/components/contextMenu";
+import ContextMenuEntry from "@/app/components/contextMenu/ContextMenuEntry.tsx";
 
-export interface ProjectType extends IDBData {
-    id: string;
-    title: string;
-    description: string;
+export interface ProjectType extends IDBTextEntry {
     notes: string[];
     updated: number;
 }
@@ -24,8 +23,8 @@ export interface ProjectType extends IDBData {
 export const getEmptyProject = (): ProjectType => {
     return {
         id: new Date().getTime().toString(),
-        description: '',
-        title: '',
+        content: '',
+        name: '',
         notes: [],
         updated: new Date().getTime(),
     };
@@ -58,8 +57,8 @@ export function ProjectEditor({
     });
 
     useEffect(() => {
-        if (editor && project.description) {
-            editor.commands.setContent(project.description);
+        if (editor && project.content) {
+            editor.commands.setContent(project.content);
         }
     }, [editor, project]);
 
@@ -68,7 +67,7 @@ export function ProjectEditor({
             <NoteMenu
                 editor={editor}
                 saveAction={(html: string) => {
-                    project.description = html;
+                    project.content = html;
                     return saveProjectAction(project);
                 }}
                 backAction={backAction}
@@ -89,33 +88,54 @@ export function ProjectBrowser({
     saveProjectAction: (project: ProjectType) => Promise<void>;
 }>) {
     const nameRef = useRef<HTMLInputElement>(null);
+    const { x, y, visible, openContextMenu, closeContextMenu, contextData } =
+        useContextMenu();
+    const [filter, setFilter] = useState<string>('');
+
+    const handleKeyPress = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (!setFilter || !e.target) {
+            return;
+        }
+        if (e.key === "Enter") {
+            setFilter((e.target as HTMLInputElement).value);
+        }
+    }, [setFilter]);
+
     return (
         <div>
-            <div className='flex flex-wrap gap-4 p-4'>
-                <div className='w-40 h-40 flex flex-col items-center justify-between border border-zinc-200 p-2 hover:border-zinc-400 hover:bg-zinc-100'>
-                    <div className='flex flex-col h-full w-full'>
-                        <div className='mb-2'>Name</div>
-                        <div className='text-sm font-semibold truncate flex-1'>
-                            <input ref={nameRef} />
-                        </div>
-                        <button
-                            className='text-2xl'
-                            onClick={() =>
-                                setProjectAction({
-                                    ...getEmptyProject(),
-                                    title: nameRef.current?.value ?? '',
-                                })
-                            }
-                        >
-                            <BsFillFloppy2Fill />
-                        </button>
+            <div className='flex flex-row items-center'>
+                <div className='flex flex-row place-items-center p-1'>
+                    <div className='me-2'>Name</div>
+                    <div className='text-sm font-semibold truncate flex-1 me-2'>
+                        <input ref={nameRef} onKeyUp={handleKeyPress}/>
                     </div>
+                    <button
+                        className='text-xl me-2'
+                        onClick={() =>
+                            setFilter(nameRef.current?.value ?? '')
+                        }
+                    >
+                        <BsSearch/>
+                    </button>
+                    <button
+                        className='text-xl me-2'
+                        onClick={() =>
+                            setProjectAction({
+                                ...getEmptyProject(),
+                                name: nameRef.current?.value ?? '',
+                            })
+                        }
+                    >
+                        <BsClipboard2Plus/>
+                    </button>
                 </div>
-
-                {projects.map((project) => (
+            </div>
+            <div className='flex flex-wrap gap-4 p-4'>
+                {projects.filter(p => p.name.includes(filter)).map((project) => (
                     <div
-                        className='w-40 h-40 flex flex-col items-center justify-between border border-zinc-200 p-2 hover:border-zinc-400 hover:bg-zinc-100'
+                        className='flex flex-col items-center justify-between border border-zinc-200 p-2 hover:border-zinc-400 hover:bg-zinc-100'
                         key={'project_' + project.id}
+                        onContextMenu={(event) => openContextMenu(event, project)}
                     >
                         <button
                             className='w-full text-center'
@@ -131,29 +151,32 @@ export function ProjectBrowser({
                         <div className='text-xs text-zinc-400'>
                             {project.updatedDate}
                         </div>
-                        <button
-                            onClick={async () => {
-                                if (
-                                    confirm(
-                                        'Are you sure to delete this project: ' +
-                                            project.name +
-                                            ' ?'
-                                    )
-                                ) {
-                                    await saveProjectAction({
-                                        ...project,
-                                        deleted: true,
-                                    });
-                                    setProjectAction(getEmptyProject());
-                                }
-                            }}
-                            className='transition ease-in-out text-zinc-600 hover:text-red-600 mt-2'
-                        >
-                            <BsTrash />
-                        </button>
                     </div>
                 ))}
             </div>
+            <ContextMenu x={x} y={y} visible={visible} onClose={closeContextMenu}>
+                <ContextMenuEntry icon={<span className="material-icons">edit</span>} onClick={()=>{}}>
+                    Rename
+                </ContextMenuEntry>
+                <ContextMenuEntry icon={<BsTrash />} onClick={async () => {
+                    const project = contextData as ProjectType
+                    if (
+                        confirm(
+                            'Are you sure to delete this project: ' +
+                            project.name +
+                            ' ?'
+                        )
+                    ) {
+                        await saveProjectAction({
+                            ...project,
+                            deleted: true,
+                        });
+                        setProjectAction(getEmptyProject());
+                    }
+                }}>
+                    Delete
+                </ContextMenuEntry>
+            </ContextMenu>
         </div>
     );
 }
@@ -178,7 +201,7 @@ export default function Projects() {
 
     const decryptProject = async (project: ProjectType) => {
         if (
-            !project.title &&
+            !project.name &&
             isEncrypted(project as unknown as EncryptedData)
         ) {
             let error;
@@ -270,7 +293,7 @@ export default function Projects() {
 
     return (
         <div className='flex flex-row h-full w-full'>
-            {!project.title && (
+            {!project.name && (
                 <ProjectBrowser
                     projects={projects}
                     setProjectAction={setProjectAction}
@@ -278,7 +301,7 @@ export default function Projects() {
                     saveProjectAction={saveProjectAction}
                 ></ProjectBrowser>
             )}
-            {project.title && (
+            {project.name && (
                 <ProjectEditor
                     project={project}
                     saveProjectAction={saveProjectAction}
