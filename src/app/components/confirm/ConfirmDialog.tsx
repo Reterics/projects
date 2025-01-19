@@ -10,8 +10,7 @@ import {
 type ConfirmDialogProps = {
     title?: string;
     message: React.ReactNode;
-    onConfirm: (target: HTMLDivElement | null) => void;
-    onCancel: (target: HTMLDivElement | null) => void;
+    onClose: (value: boolean | HTMLDivElement | null) => void;
     confirmMessage?: string;
     cancelMessage?: string;
 };
@@ -19,8 +18,7 @@ type ConfirmDialogProps = {
 export default function ConfirmDialog({
     title,
     message,
-    onConfirm,
-    onCancel,
+    onClose,
     confirmMessage,
     cancelMessage,
 }: Readonly<ConfirmDialogProps>) {
@@ -47,7 +45,7 @@ export default function ConfirmDialog({
                     <div className='flex items-center'>
                         <button
                             className={controlButtonClasses}
-                            onClick={() => onCancel(dialogRef.current)}
+                            onClick={() => onClose(false)}
                             title='Close'
                         >
                             <BsXLg />
@@ -59,14 +57,14 @@ export default function ConfirmDialog({
                 <div className='flex'>
                     <button
                         type='button'
-                        onClick={() => onConfirm(dialogRef.current)}
+                        onClick={() => onClose(dialogRef.current)}
                         className='w-full border border-zinc-600 hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-2.5 py-2.5 text-center bg-primary-600 hover:bg-primary-700 focus:ring-primary-800'
                     >
                         {confirmMessage ?? 'Yes'}
                     </button>
                     <button
                         type='button'
-                        onClick={() => onCancel(dialogRef.current)}
+                        onClick={() => onClose(false)}
                         className='w-full border border-zinc-600 hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-2.5 py-2.5 text-center bg-primary-600 hover:bg-primary-700 focus:ring-primary-800'
                     >
                         {cancelMessage ?? 'No'}
