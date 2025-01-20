@@ -17,8 +17,8 @@ export default function mountComponent<P, R = HTMLElement|boolean>(
         };
 
         const handleClose = (result: R) => {
-            cleanup();
             resolve(result);
+            cleanup();
         };
 
         root.render(

@@ -10,13 +10,14 @@ import Table from '@tiptap/extension-table';
 import TableHeader from '@tiptap/extension-table-header';
 import TableRow from '@tiptap/extension-table-row';
 import TableCell from '@tiptap/extension-table-cell';
-import {NoteMenu, NoteType} from '@/app/pwa/notes';
+import {NoteMenu} from '@/app/pwa/notes';
 import {
     BsArrowClockwise, BsArrowLeftSquare, BsArrowRightSquare, BsArrowUpSquare,
     BsFileEarmark, BsPencilSquare, BsPlusSquare, BsSearch, BsTrash
 } from 'react-icons/bs';
 import {ContextMenu, useContextMenu} from "@/app/components/contextMenu";
 import ContextMenuEntry from "@/app/components/contextMenu/ContextMenuEntry.tsx";
+import {confirmInput} from "@/app/components/confirm";
 
 export interface ProjectType extends IDBTextEntry {
     notes: string[];
@@ -149,15 +150,37 @@ export function ProjectBrowser({
                 >
                     <BsSearch/>
                 </button>
-                <button className={navBarButton} onClick={() =>
-                    setProjectAction({
-                        ...getEmptyProject(),
-                        name: nameRef.current?.value ?? '',
-                    })
+                <button className={navBarButton} onClick={async () => {
+                    const response = await confirmInput([
+                        {
+                            label: 'Name',
+                            name: 'name',
+                            value: ''
+                        },
+                        {
+                            label: 'Path',
+                            name: 'path',
+                            value: '/'
+                        }
+                    ])
+                    if (response instanceof HTMLElement) {
+                        const name = (response
+                            .querySelector('input[name=name]') as HTMLInputElement)?.value ?? '';
+                        const path = (response
+                            .querySelector('input[name=path]') as HTMLInputElement)?.value ?? '';
+
+                        setProjectAction({
+                            ...getEmptyProject(),
+                            name: name,
+                            group: path
+                        });
+                    }
+
+                }
                 }><BsPlusSquare/></button>
             </div>
             <div className='flex flex-wrap gap-4 p-4'>
-                {projects.filter(p => p.name.includes(filter)).map((project) => (
+                {projects.filter(p => p.name?.includes(filter)).map((project) => (
                     <div
                         className='flex flex-col items-center justify-between p-2 hover:border-zinc-400 hover:bg-zinc-100'
                         key={'project_' + project.id}
@@ -227,7 +250,7 @@ export default function Projects() {
 
     const decryptProject = async (project: ProjectType) => {
         if (
-            !project.name &&
+            project.name &&
             isEncrypted(project as unknown as EncryptedData)
         ) {
             let error;
@@ -271,13 +294,6 @@ export default function Projects() {
     const setProjectAction = async (project: ProjectType) => {
         await decryptProject(project);
         setProject(project);
-        if (store.current) {
-            if (store.current.get(project.id, 'projects')) {
-                await store.current.update(project, 'projects');
-            } else {
-                await store.current.push(project, 'projects');
-            }
-        }
     };
 
     const saveProjectAction = async (project: ProjectType) => {
@@ -293,7 +309,6 @@ export default function Projects() {
         await setDecryptedProjects(
             store.current?.getAll('projects').toReversed() as ProjectType[]
         );
-
         toast('Project Saved');
     };
 
