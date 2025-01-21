@@ -12,12 +12,23 @@ import TableRow from '@tiptap/extension-table-row';
 import TableCell from '@tiptap/extension-table-cell';
 import {NoteMenu} from '@/app/pwa/notes';
 import {
-    BsArrowClockwise, BsArrowLeftSquare, BsArrowRightSquare, BsArrowUpSquare,
-    BsFileEarmark, BsPencilSquare, BsPlusSquare, BsSearch, BsTrash
+    BsArrowClockwise,
+    BsArrowLeftSquare,
+    BsArrowRightSquare,
+    BsArrowUpSquare,
+    BsFileEarmark,
+    BsFileEarmarkPlus,
+    BsFolder,
+    BsFolderPlus,
+    BsPencilSquare,
+    BsPlusSquare,
+    BsSearch,
+    BsSpellcheck,
+    BsTrash
 } from 'react-icons/bs';
 import {ContextMenu, useContextMenu} from "@/app/components/contextMenu";
 import ContextMenuEntry from "@/app/components/contextMenu/ContextMenuEntry.tsx";
-import {confirmInput} from "@/app/components/confirm";
+import {confirmInput,confirm} from "@/app/components/confirm";
 
 export interface ProjectType extends IDBTextEntry {
     notes: string[];
@@ -95,19 +106,27 @@ export function ProjectBrowser({
     const { x, y, visible, openContextMenu, closeContextMenu, contextData } =
         useContextMenu();
     const [filter, setFilter] = useState<string>('');
-    const [path, setPath] = useState<string>('');
+    const ROOT = '/';
+    const [path, setPath] = useState<string>(ROOT);
+    const [initialGroups, setInitialGroups] = useState<string[]>([]);
 
-    /*const groupedProjects = projects.reduce<Record<string, NoteType[]>>(
-        (acc, note) => {
-            const groupName = note.group?.trim() ? note.group.trim() : '(none)';
+    const groupedProjects = projects.reduce<Record<string, ProjectType[]>>(
+        (acc, project) => {
+            const groupName = project.group?.trim() ? project.group.trim() : ROOT;
             if (!acc[groupName]) {
                 acc[groupName] = [];
             }
-            acc[groupName].push(note);
+            acc[groupName].push(project);
             return acc;
         },
-        {}
-    );*/
+        initialGroups.reduce((a,b)=>({...a, [b]: []}), {})
+    );
+    const groups = [...new Set(Object.keys(groupedProjects)
+        .filter((groupName) => groupName.startsWith(path) && groupName !== ROOT)
+        .map((groupName)=> groupName.substring(path.length))
+        .map((groupName)=> groupName.substring(0, groupName.indexOf('/')))
+    )]
+
 
     const handleKeyPress = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
         if (!setFilter || !e.target) {
@@ -179,7 +198,27 @@ export function ProjectBrowser({
                 }
                 }><BsPlusSquare/></button>
             </div>
-            <div className='flex flex-wrap gap-4 p-4'>
+            <div
+                className='flex flex-wrap gap-4 p-4'
+                onContextMenu={(event) => openContextMenu(event, undefined)}
+            >
+                {groups.map((group) => (
+                    <div
+                        className='flex flex-col items-center justify-between p-2 hover:border-zinc-400 hover:bg-zinc-100'
+                        key={'group_' + group}
+                    >
+                        <button
+                            className='w-full text-center'
+                        >
+                            <div className='text-6xl text-zinc-500 mb-2'>
+                                <BsFolder />
+                            </div>
+                            <div className='text-sm font-semibold truncate'>
+                                {group}
+                            </div>
+                        </button>
+                    </div>
+                ))}
                 {projects.filter(p => p.name?.includes(filter)).map((project) => (
                     <div
                         className='flex flex-col items-center justify-between p-2 hover:border-zinc-400 hover:bg-zinc-100'
@@ -191,7 +230,7 @@ export function ProjectBrowser({
                             onContextMenu={(event) => openContextMenu(event, project)}
                         >
                             <div className='text-6xl text-zinc-500 mb-2'>
-                            <BsFileEarmark />
+                                <BsFileEarmark/>
                             </div>
                             <div className='text-sm font-semibold truncate'>
                                 {project.name || <span className='text-zinc-400'>(empty)</span>}
@@ -204,27 +243,103 @@ export function ProjectBrowser({
                 ))}
             </div>
             <ContextMenu x={x} y={y} visible={visible} onClose={closeContextMenu}>
-                <ContextMenuEntry icon={<BsPencilSquare/>} onClick={()=>{}}>
-                    Edit
-                </ContextMenuEntry>
-                <ContextMenuEntry icon={<BsTrash />} onClick={async () => {
-                    const project = contextData as ProjectType
-                    if (
-                        confirm(
-                            'Are you sure to delete this project: ' +
-                            project.name +
-                            ' ?'
-                        )
-                    ) {
-                        await saveProjectAction({
-                            ...project,
-                            deleted: true,
-                        });
-                        setProjectAction(getEmptyProject());
-                    }
-                }}>
-                    Delete
-                </ContextMenuEntry>
+                {!!contextData &&
+                    <>
+                        <ContextMenuEntry icon={<BsPencilSquare/>} onClick={()=>{
+                            const project = contextData as ProjectType
+                            setProjectAction(project)
+                        }}>
+                            Edit
+                        </ContextMenuEntry>
+                        <ContextMenuEntry icon={<BsSpellcheck />} onClick={async ()=>{
+                            const project = contextData as ProjectType
+
+                            const response = await confirmInput([
+                                {
+                                    label: 'Name',
+                                    name: 'name',
+                                    value: project.name ?? '',
+                                }
+                            ])
+                            if (response instanceof HTMLElement) {
+                                const name = (response
+                                    .querySelector('input[name=name]') as HTMLInputElement)?.value ?? '';
+
+                                setProjectAction({
+                                    ...project,
+                                    name: name
+                                });
+                            }
+                        }}>
+                            Rename
+                        </ContextMenuEntry>
+                        <ContextMenuEntry icon={<BsTrash />} onClick={async () => {
+                            const project = contextData as ProjectType
+                            const response = await confirm(
+                                'Are you sure to delete this project: ' +
+                                project.name +
+                                ' ?'
+                            )
+                            if (response) {
+                                await saveProjectAction({
+                                    ...project,
+                                    deleted: true,
+                                });
+                                setProjectAction(getEmptyProject());
+                            }
+                        }}>
+                            Delete
+                        </ContextMenuEntry>
+                    </>
+                }
+
+                {!contextData &&
+                    <>
+                        <ContextMenuEntry icon={<BsFileEarmarkPlus />} onClick={async () => {
+                            const response = await confirmInput([
+                                {
+                                    label: 'Name',
+                                    name: 'name',
+                                    value: ''
+                                }
+                            ])
+                            if (response instanceof HTMLElement) {
+                                const name = (response
+                                    .querySelector('input[name=name]') as HTMLInputElement)?.value ?? '';
+
+                                setProjectAction({
+                                    ...getEmptyProject(),
+                                    name: name,
+                                    group: path
+                                });
+                            }
+                        }}>
+                            New project
+                        </ContextMenuEntry>
+
+                        <ContextMenuEntry icon={<BsFolderPlus />} onClick={async ()=> {
+                            const response = await confirmInput([
+                                {
+                                    label: 'Name',
+                                    name: 'name',
+                                    value: ''
+                                }
+                            ])
+                            if (response instanceof HTMLElement) {
+                                const name = (response
+                                    .querySelector('input[name=name]') as HTMLInputElement)?.value ?? '';
+                                const newPath = `${path + name}/`;
+
+                                if (name && newPath && !initialGroups.includes(newPath)) {
+                                    setInitialGroups((prev) => [...prev, newPath])
+                                }
+                            }
+                        }}>
+                            New group
+                        </ContextMenuEntry>
+                    </>
+                }
+
             </ContextMenu>
         </div>
     );
