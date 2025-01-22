@@ -44,6 +44,7 @@ export const getEmptyProject = (): ProjectType => {
         updated: new Date().getTime(),
     };
 };
+
 export function ProjectEditor({
     project,
     saveProjectAction,
@@ -242,6 +243,10 @@ export function ProjectBrowser({
                     </div>
                 ))}
             </div>
+            <div
+                className='flex flex-1 h-full'
+                onContextMenu={(event) => openContextMenu(event, undefined)}
+            ></div>
             <ContextMenu x={x} y={y} visible={visible} onClose={closeContextMenu}>
                 {!!contextData &&
                     <>

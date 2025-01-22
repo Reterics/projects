@@ -21,8 +21,14 @@ export interface MenuBarProps {
 export default function MenuBar({ model, onCreate }: Readonly<MenuBarProps>) {
     const [currentTime, setCurrentTime] = useState<string | null>(null);
     const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+    const [search, setSearch] = useState<string>('');
     const outsideRef = useRef<HTMLElement | null>(null);
 
+    const onSearchKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            // TODO: Do search
+        }
+    };
     useEffect(() => {
         const now = new Date();
         setCurrentTime(
@@ -151,6 +157,10 @@ export default function MenuBar({ model, onCreate }: Readonly<MenuBarProps>) {
                 <input
                     type='text'
                     placeholder='Search'
+                    name='search'
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    onKeyDown={(e)=>onSearchKeyDown(e as unknown as KeyboardEvent)}
                     className='text-sm bg-zinc-200 hover:bg-zinc-50 focus:bg-zinc-50 focus:outline-none rounded px-2 py-1 placeholder-zinc-500'
                 />
                 <div className='text-sm font-light'>{currentTime}</div>
