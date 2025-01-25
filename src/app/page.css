@@ -1,7 +1,7 @@
 .system-outer .dock-window {
-    width: 100%;
-    position: relative;
-    background-image: url('./assets/wallpaper.webp');
-    background-repeat: no-repeat;
-    background-size: cover;
+  width: 100%;
+  position: relative;
+  background-image: url('./assets/wallpaper.webp');
+  background-repeat: no-repeat;
+  background-size: cover;
 }
