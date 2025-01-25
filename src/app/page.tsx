@@ -38,6 +38,7 @@ export default function Home() {
       height: 100,
     },
   ]);
+  const [hydrated, setHydrated] = useState(false);
 
   const searchParams = useSearchParams();
   const appName = searchParams?.get('app');
@@ -107,8 +108,13 @@ export default function Home() {
     },
   ];
 
-  if (typeof window === 'undefined') {
-    return null;
+  useEffect(() => {
+    // this forces a rerender
+    setHydrated(true)
+  }, [])
+
+  if (!hydrated) {
+    return null
   }
 
   return (

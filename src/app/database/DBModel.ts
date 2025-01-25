@@ -1,5 +1,5 @@
 'use client';
-import {decryptData, encryptData, EncryptedData} from '@/app/utils/crypto.ts';
+import {decryptData, encryptData, EncryptedData} from '../utils/crypto.ts';
 
 export interface IDBData {
   id: string;
