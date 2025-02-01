@@ -110,11 +110,11 @@ export default function Home() {
 
   useEffect(() => {
     // this forces a rerender
-    setHydrated(true)
-  }, [])
+    setHydrated(true);
+  }, []);
 
   if (!hydrated) {
-    return null
+    return null;
   }
 
   return (

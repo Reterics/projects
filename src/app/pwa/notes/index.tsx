@@ -47,6 +47,10 @@ import {
 import Dropdown from '@/app/components/Dropdown.tsx';
 import {EncryptedData, isEncrypted} from '@/app/utils/crypto.ts';
 import {confirm} from '@/app/components/confirm';
+import {deleteNote, fetchNotes, updateNote} from '@/slices/notesSlice.ts';
+import {useNotes} from '@/hooks/useNotes.ts';
+import {useDispatch} from 'react-redux';
+import {AppDispatch} from '@/store.ts';
 
 export interface NoteType extends IDBTextEntry {
   timeLabel?: string;
@@ -332,25 +336,6 @@ export function NoteBrowser({
     }));
   };
 
-  notes.sort((a, b) => Number(b.updated) - Number(a.updated));
-  const today = new Date();
-  notes.forEach((note: NoteType) => {
-    const updatedDate = new Date(note.updated);
-    const isSameDay =
-      updatedDate.getFullYear() === today.getFullYear() &&
-      updatedDate.getMonth() === today.getMonth() &&
-      updatedDate.getDate() === today.getDate();
-
-    if (isSameDay) {
-      note.timeLabel = updatedDate.toISOString().split('T')[1].substring(0, 5);
-    } else {
-      note.timeLabel = new Date(note.updated)
-        .toISOString()
-        .split('T')[0]
-        .substring(2);
-    }
-  });
-
   const groupedNotes = notes.reduce<Record<string, NoteType[]>>((acc, note) => {
     // Optional: default to "No Group" if the note.group is blank or not defined
     const groupName = note.group?.trim() ? note.group.trim() : '(none)';
@@ -565,11 +550,13 @@ export function NoteEditor({
       <NoteMenu
         editor={editor}
         saveAction={(html: string, text) => {
-          note.content = html;
           const lineBreak = text.indexOf('\n');
           const nameEnd = lineBreak <= 1 ? 10 : lineBreak;
-          note.name = text.substring(0, nameEnd);
-          saveAction(note);
+          saveAction({
+            ...note,
+            content: html,
+            name: text.substring(0, nameEnd),
+          });
         }}
         removeAction={removeAction}
         leftSideAction={leftSideAction}
@@ -581,16 +568,11 @@ export function NoteEditor({
 }
 
 export default function Notes() {
-  const [notes, setNotes] = useState<NoteType[]>([]);
+  const {notes} = useNotes();
+  const dispatch = useDispatch<AppDispatch>();
+
   const [note, setNote] = useState<NoteType>(getEmptyNote());
   const [sidebarOpen, setSidebarOpen] = useState(true);
-
-  const store = useRef<IDBStore | null>(null);
-  if (!store.current) {
-    store.current = new IDBStore({
-      tables: ['notes'],
-    });
-  }
 
   const fireStore = useRef<FirebaseStore | null>(null);
   if (!fireStore.current) {
@@ -614,60 +596,33 @@ export default function Notes() {
     return true;
   };
 
-  const setDecryptedNotes = useCallback(async (notes: NoteType[]) => {
-    const decrypted: NoteType[] = [];
-    for (const note of notes) {
-      if (await decryptNote(note)) {
-        decrypted.push(note);
-      }
-    }
-    setNotes(decrypted);
-  }, []);
-
-  useEffect(() => {
-    if (store.current) {
-      store.current.load().then(async () => {
-        await setDecryptedNotes(
-          store.current?.getAll('notes').toReversed() as NoteType[]
-        );
-      });
-    }
-  }, [setDecryptedNotes]);
-
   const setNoteAction = async (note: NoteType) => {
     await decryptNote(note);
     setNote(note);
   };
 
   const saveNoteAction = async (note: NoteType) => {
-    if (!store.current) {
-      throw new Error('IDBStore is undefined');
-    }
+    dispatch(updateNote(note));
 
-    if (store.current.get(note.id, 'notes')) {
-      await store.current.update(note, 'notes');
-    } else {
-      await store.current.push(note, 'notes');
-    }
-    await setDecryptedNotes(
-      store.current?.getAll('notes').toReversed() as NoteType[]
-    );
-
-    toast('Note Saved');
+    toast('Note Saved Locally');
   };
 
   const syncNotesAction = async () => {
     if (!fireStore.current?.ready()) {
       throw new Error('FireStore is not ready');
     }
-    if (!store.current) {
-      throw new Error('IDBStore is undefined');
-    }
     await fireStore.current?.load();
-    await DBModel.sync([store.current, fireStore.current], 'notes');
-    await setDecryptedNotes(
-      store.current?.getAll('notes').toReversed() as NoteType[]
+    // Legacy support TODO: Find alternative
+    await DBModel.sync(
+      [
+        new IDBStore({
+          tables: ['notes'],
+        }),
+        fireStore.current,
+      ],
+      'notes'
     );
+    dispatch(fetchNotes());
 
     toast('Data synced with Firestore');
   };
@@ -680,7 +635,7 @@ export default function Notes() {
           '?'
       );
       if (response) {
-        await store.current?.remove(note.id, 'notes');
+        deleteNote(note.id);
         await fireStore.current?.remove(note.id, 'notes');
         toast('Note Removed');
         setNote(getEmptyNote());

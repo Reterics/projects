@@ -31,7 +31,12 @@ describe('IDBStore', () => {
   });
 
   it('should push data into a table and persist it', async () => {
-    const userData = {id: 'user1', name: 'John Doe', active: true, updated: new Date().getTime()};
+    const userData = {
+      id: 'user1',
+      name: 'John Doe',
+      active: true,
+      updated: new Date().getTime(),
+    };
     await store.push(userData, 'users');
 
     const users = store.getAll('users');
@@ -49,8 +54,18 @@ describe('IDBStore', () => {
   });
 
   it('should unshift data into a table and persist it', async () => {
-    const userData1 = {id: 'user1', name: 'John Doe', active: true, updated: new Date().getTime()};
-    const userData2 = {id: 'user2', name: 'Jane Doe', active: false, updated: new Date().getTime()};
+    const userData1 = {
+      id: 'user1',
+      name: 'John Doe',
+      active: true,
+      updated: new Date().getTime(),
+    };
+    const userData2 = {
+      id: 'user2',
+      name: 'Jane Doe',
+      active: false,
+      updated: new Date().getTime(),
+    };
 
     await store.push(userData1, 'users');
     await store.unshift(userData2, 'users');
@@ -73,11 +88,21 @@ describe('IDBStore', () => {
   });
 
   it('should update data in a table and persist changes', async () => {
-    const userData = {id: 'user1', name: 'John Doe', active: true, updated: new Date().getTime()};
+    const userData = {
+      id: 'user1',
+      name: 'John Doe',
+      active: true,
+      updated: new Date().getTime(),
+    };
     await store.push(userData, 'users');
 
     await store.update(
-      {id: 'user1', name: 'John Smith', active: true, updated: new Date().getTime()},
+      {
+        id: 'user1',
+        name: 'John Smith',
+        active: true,
+        updated: new Date().getTime(),
+      },
       'users'
     );
 
@@ -95,7 +120,12 @@ describe('IDBStore', () => {
   });
 
   it('should remove data from a table and persist it', async () => {
-    const userData = {id: 'user1', name: 'John Doe', active: true, updated: new Date().getTime()};
+    const userData = {
+      id: 'user1',
+      name: 'John Doe',
+      active: true,
+      updated: new Date().getTime(),
+    };
     await store.push(userData, 'users');
     await store.remove('user1', 'users');
 
