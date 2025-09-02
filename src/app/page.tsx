@@ -45,41 +45,31 @@ export default function Home() {
 
   const onCreateAction = (runningApp: RunningApp) => {
     setApps((prevApps) => {
-      const pattern = /^(.*)\s\((\d+)\)$/;
-      const prevApp = prevApps.find((a) => a.label === runningApp.label);
+      // Strip a trailing " (n)" if someone passed in a suffixed label
+      const base = runningApp.label.replace(/\s\(\d+\)$/, "");
 
-      let label = runningApp.label;
-
-      const index = Math.max(
-        ...prevApps.map((a) => {
-          const match = RegExp(pattern).exec(a.label);
-          if (!label && match?.[1]) {
-            label = match[1];
-          }
-          if (match?.[2]) {
-            const numeric = Number.parseInt(match[2], 10);
-            if (!Number.isNaN(numeric) && numeric) {
-              return numeric;
-            }
-          }
-          return 0;
+      // Collect existing indices for the same base label:
+      //  - "Base" (no suffix) counts as 0
+      //  - "Base (n)" counts as n
+      const nums = prevApps
+        .map((a) => a.label)
+        .map((l) => {
+          const m = l.match(/^(.+?)(?:\s\((\d+)\))?$/);
+          if (!m || m[1] !== base) return null;
+          return m[2] ? parseInt(m[2], 10) : 0;
         })
-      );
+        .filter((n): n is number => n !== null);
 
-      if (prevApp) {
-        if (
-          !Number.isNaN(index) &&
-          index &&
-          index !== Infinity &&
-          index !== -Infinity
-        ) {
-          runningApp.label = prevApp.label + ' (' + (index + 1) + ')';
-        } else {
-          runningApp.label = prevApp.label + ' (1)';
-        }
+      // First instance: keep plain label (e.g., "Projects")
+      if (nums.length === 0) {
+        return [...prevApps, { ...runningApp, label: base }];
       }
 
-      return [...prevApps, runningApp];
+      // Next instances: "Base (max+1)" => 2 for the third, 3 for the fourth, etc.
+      const next = Math.max(...nums) + 1;
+      const label = `${base} (${next})`;
+
+      return [...prevApps, { ...runningApp, label }];
     });
   };
 

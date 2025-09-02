@@ -157,7 +157,7 @@ export default function MenuBar({model, onCreate}: Readonly<MenuBarProps>) {
           onKeyDown={(e) => onSearchKeyDown(e as unknown as KeyboardEvent)}
           className='text-sm bg-zinc-200 hover:bg-zinc-50 focus:bg-zinc-50 focus:outline-none rounded px-2 py-1 placeholder-zinc-500'
         />
-        <div className='text-sm font-light'>{currentTime}</div>
+        <div className='text-sm font-light whitespace-nowrap'>{currentTime}</div>
       </div>
     </nav>
   );

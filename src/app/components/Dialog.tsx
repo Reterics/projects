@@ -1,6 +1,9 @@
-import React, {useCallback, useEffect, useRef, useState} from 'react';
+import React, {useCallback, useRef, useState} from 'react';
 import {Rnd} from 'react-rnd';
 import {BsCopy, BsDashLg, BsSquare, BsXLg} from 'react-icons/bs';
+
+// Global z-index counter to manage stacking order across dialogs
+let zCounter = 100;
 
 export interface DialogProps {
   title?: string;
@@ -55,6 +58,8 @@ export default function Dialog({
 }: Readonly<DialogProps>) {
   const [width, setWidth] = useState(initialWidth);
   const [height, setHeight] = useState(initialHeight);
+  const [zIndex, setZIndex] = useState<number>(() => ++zCounter);
+  const bringToFront = useCallback(() => setZIndex(++zCounter), []);
   const dialogRef = useRef<HTMLDivElement>(null);
   const posRef = useRef<{x: number; y: number}>({
     x: initialX,
@@ -85,23 +90,6 @@ export default function Dialog({
   const isMaximized =
     parent && parent.offsetHeight === height && parent.offsetWidth === width;
 
-  const focusDialog = () => {
-    const dialog = dialogRef.current?.parentElement as HTMLElement | null;
-    if (!dialog?.classList.contains('active')) {
-      document.querySelectorAll('.dialog-modal').forEach((element) => {
-        if (element !== dialog) {
-          element.classList.remove('active');
-        } else {
-          element.classList.add('active');
-        }
-      });
-    }
-  };
-
-  useEffect(() => {
-    focusDialog();
-  }, []);
-
   return (
     <Rnd
       bounds='window'
@@ -111,15 +99,18 @@ export default function Dialog({
         height: height,
       }}
       dragHandleClassName='title-bar'
-      className='dialog-modal z-40'
+      className='dialog-modal'
+      style={{ zIndex }}
       enableUserSelectHack={true}
+      onDragStart={bringToFront}
+      onResizeStart={bringToFront}
       onResizeStop={(_e, _dir, _elementRef, delta) => {
         setHeight(height + delta.height);
         setWidth(width + delta.width);
       }}
     >
       <div ref={dialogRef} className={windowClasses + ' w-full h-full'}>
-        <div className={`title-bar ${titleBarClasses}`} onClick={focusDialog}>
+        <div className={`title-bar ${titleBarClasses}`} onClick={bringToFront}>
           <div className='flex items-center space-x-2 ml-1'>
             <span className='font-bold text-sm'>{title}</span>
           </div>

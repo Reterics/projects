@@ -69,8 +69,8 @@ const terminal: MenuBarItem = {
     const id = new Date().getTime().toString();
     return {
       id,
-      label: notes.label,
-      icon: notes.icon,
+      label: terminal.label,
+      icon: terminal.icon,
       show: true,
       focus: () => focusAppById(id),
       onClose: () => hideAppById(id),

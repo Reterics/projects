@@ -9,6 +9,7 @@ function openIDB(
     const request = indexedDB.open(databaseName, version);
     request.onupgradeneeded = () => {
       const db = request.result;
+      // Ensure all required stores exist in this upgrade step
       for (const storeName of storeNames) {
         if (!db.objectStoreNames.contains(storeName)) {
           db.createObjectStore(storeName, {keyPath: 'id'});
@@ -16,7 +17,21 @@ function openIDB(
       }
     };
     request.onsuccess = () => {
-      resolve(request.result);
+      const db = request.result;
+
+      // Check if all required stores exist
+      const missingStores = storeNames.filter(
+        storeName => !db.objectStoreNames.contains(storeName)
+      );
+
+      if (missingStores.length > 0) {
+        // Close the database and reopen with incremented version
+        db.close();
+        resolve(openIDB(databaseName, version + 1, storeNames));
+        return;
+      }
+
+      resolve(db);
     };
     request.onerror = () => {
       reject(request.error as Error);
