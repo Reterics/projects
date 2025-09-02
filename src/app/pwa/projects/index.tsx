@@ -6,10 +6,7 @@ import DBModel, {IDBTextEntry} from '@/app/database/DBModel.ts';
 import {toast} from 'react-toastify';
 import {EditorContent, useEditor} from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import Table from '@tiptap/extension-table';
-import TableHeader from '@tiptap/extension-table-header';
-import TableRow from '@tiptap/extension-table-row';
-import TableCell from '@tiptap/extension-table-cell';
+import { Table, TableRow, TableCell, TableHeader } from '@tiptap/extension-table'
 import {NoteMenu} from '@/app/pwa/notes';
 import {
   BsArrowClockwise,
@@ -55,6 +52,7 @@ export function ProjectEditor({
   backAction: () => void;
 }>) {
   const editor = useEditor({
+    immediatelyRender: false,
     extensions: [
       StarterKit,
       Table.configure({

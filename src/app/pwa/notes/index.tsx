@@ -1,10 +1,7 @@
 'use client';
 import {useEditor, EditorContent} from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import Table from '@tiptap/extension-table';
-import TableHeader from '@tiptap/extension-table-header';
-import TableRow from '@tiptap/extension-table-row';
-import TableCell from '@tiptap/extension-table-cell';
+import { Table, TableRow, TableCell, TableHeader } from '@tiptap/extension-table'
 import {Editor} from '@tiptap/core';
 import './style.scss';
 import IDBStore from '@/app/database/stores/IDBStore.ts';
@@ -522,6 +519,7 @@ export function NoteEditor({
   backAction?: () => void;
 }>) {
   const editor = useEditor({
+    immediatelyRender: false,
     extensions: [
       StarterKit,
       Table.configure({
