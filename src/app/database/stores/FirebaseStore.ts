@@ -25,15 +25,6 @@ export class FirebaseStore extends DBModel {
     this._ready = false;
 
     try {
-      console.log('Init with', {
-        apiKey: process.env.NEXT_PUBLIC_FIREBASE_APIKEY,
-        authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-        storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-        messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGE_SENDER_ID,
-        appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-        measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
-      });
       this._app = initializeApp({
         apiKey: process.env.NEXT_PUBLIC_FIREBASE_APIKEY,
         authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -78,9 +69,13 @@ export class FirebaseStore extends DBModel {
         const data = {...doc1.data(), id: doc1.id} as IDBData;
 
         if (data && !data.deleted) {
-          const decrypted =
-            (await DBModel.decryptDoc(data).catch((e) => console.error(e))) ??
-            data;
+          let decrypted: IDBData;
+          try {
+            decrypted = await DBModel.decryptDoc(data);
+          } catch (e) {
+            console.error('Failed to decrypt document:', e);
+            decrypted = data;
+          }
           if (indexOf !== -1) {
             receivedData[indexOf] = decrypted;
           } else {
@@ -129,9 +124,7 @@ export class FirebaseStore extends DBModel {
     const modelRef = doc(collection(this._firestore, table));
 
     // Use setDoc with { merge: true } to update or create the document
-    await setDoc(modelRef, this._data[table][idx], {merge: true}).catch((e) => {
-      console.error(e);
-    });
+    await setDoc(modelRef, this._data[table][idx], {merge: true});
     return this._data[table][idx];
   }
 
@@ -164,9 +157,7 @@ export class FirebaseStore extends DBModel {
     } else {
       await DBModel.encryptDoc(data);
       const colRef = collection(this._firestore, table);
-      await addDoc(colRef, data).catch((e) => {
-        console.error(e);
-      });
+      await addDoc(colRef, data);
       this._data[table]?.push(data);
     }
 

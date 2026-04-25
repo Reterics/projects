@@ -134,7 +134,7 @@ export default class IDBStore extends DBModel {
       }
     }
     data.updated = new Date().getTime();
-    await DBModel.encryptDoc(data).catch((e) => console.error(e));
+    await DBModel.encryptDoc(data);
     this._data[table].push(data);
 
     const db = await this.getDB();
@@ -175,7 +175,7 @@ export default class IDBStore extends DBModel {
       }
     }
     data.updated = new Date().getTime();
-    await DBModel.encryptDoc(data).catch((e) => console.error(e));
+    await DBModel.encryptDoc(data);
     this._data[table].unshift(data);
 
     const db = await this.getDB();
@@ -196,7 +196,7 @@ export default class IDBStore extends DBModel {
 
     items[idx] = data;
     items[idx].updated = new Date().getTime();
-    await DBModel.encryptDoc(items[idx]).catch((e) => console.error(e));
+    await DBModel.encryptDoc(items[idx]);
     const updatedItem = items[idx];
 
     const db = await this.getDB();

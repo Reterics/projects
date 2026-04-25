@@ -30,34 +30,25 @@ export const downloadAsFile = (
 };
 
 export const fileToDataURL = (file: File): Promise<string> => {
-  return new Promise((resolve) => {
-    if (file) {
-      const reader = new FileReader();
-
-      reader.onload = (e) => {
-        resolve(e.target?.result as string);
-      };
-
-      // Convert the file to a data URL
-      reader.readAsDataURL(file);
-    }
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => resolve(e.target?.result as string);
+    reader.onerror = () => reject(reader.error ?? new Error('FileReader error'));
+    reader.readAsDataURL(file);
   });
 };
 
 export const uploadFileInputAsText = (
   file: Blob
 ): Promise<string | ArrayBuffer | null> => {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = function (e: ProgressEvent<FileReader>): void {
-      if (e?.target) {
-        return resolve(e.target.result);
-      }
-      resolve(reader.result);
+      resolve(e?.target ? e.target.result : reader.result);
     };
     reader.readAsText(file);
-    reader.onerror = function (error): void {
-      console.log('Error: ', error);
+    reader.onerror = function (): void {
+      reject(reader.error ?? new Error('FileReader error'));
     };
   });
 };

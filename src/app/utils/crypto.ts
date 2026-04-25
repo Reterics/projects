@@ -8,8 +8,16 @@ export function isEncrypted(data: Partial<EncryptedData>): boolean {
   return !!(data.encrypted && data.iv && data.salt);
 }
 
+function getMasterPassphrase(): string {
+  const passphrase = process.env.NEXT_PUBLIC_PASSPHRASE;
+  if (!passphrase) {
+    throw new Error('NEXT_PUBLIC_PASSPHRASE environment variable is not set');
+  }
+  return passphrase;
+}
+
 export async function setActivePassphrase(newPassphrase: string) {
-  const passphrase = process.env.NEXT_PUBLIC_PASSPHRASE ?? 'passphrase';
+  const passphrase = getMasterPassphrase();
   const encrypted = await encryptData(newPassphrase, passphrase);
   localStorage.setItem('iv', encrypted.iv);
   localStorage.setItem('salt', encrypted.salt);
@@ -17,25 +25,22 @@ export async function setActivePassphrase(newPassphrase: string) {
 }
 
 async function getActivePassphrase(): Promise<string> {
-  const passphrase = process.env.NEXT_PUBLIC_PASSPHRASE ?? 'passphrase';
+  const passphrase = getMasterPassphrase();
 
   const encrypted = localStorage.getItem('encrypted');
   const salt = localStorage.getItem('salt');
   const iv = localStorage.getItem('iv');
 
-  const decryptedPhrase = await decryptData(
-    {
-      encrypted: encrypted ?? '',
-      iv: iv ?? '',
-      salt: salt ?? '',
-    },
-    passphrase
-  ).catch((e) => console.error(e));
-
-  if (decryptedPhrase) {
-    return decryptedPhrase;
+  if (!encrypted || !iv || !salt) {
+    return passphrase;
   }
-  return passphrase;
+
+  const decryptedPhrase = await decryptData(
+    {encrypted, iv, salt},
+    passphrase
+  ).catch(() => null);
+
+  return decryptedPhrase ?? passphrase;
 }
 
 async function deriveKeyPBKDF2Browser(

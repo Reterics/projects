@@ -79,8 +79,17 @@ export default abstract class DBModel {
   }
 
   static async decryptDoc(doc: IDBData) {
-    if (doc.encrypted) {
-      doc.content = await decryptData(doc as unknown as EncryptedData);
+    if (
+      typeof doc.encrypted === 'string' &&
+      typeof doc.iv === 'string' &&
+      typeof doc.salt === 'string'
+    ) {
+      const encData: EncryptedData = {
+        encrypted: doc.encrypted,
+        iv: doc.iv,
+        salt: doc.salt,
+      };
+      doc.content = await decryptData(encData);
       if (doc.content) {
         delete doc.iv;
         delete doc.salt;

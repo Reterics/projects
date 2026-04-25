@@ -62,9 +62,7 @@ export const fetchNotes = createAsyncThunk<NoteType[]>(
 
       return applyTimeLabel(decrypted);
     } catch (err: unknown) {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-expect-error
-      return rejectWithValue(err.message);
+      return rejectWithValue(err instanceof Error ? err.message : String(err));
     }
   }
 );
@@ -90,9 +88,7 @@ export const saveNote = createAsyncThunk<NoteType, NoteType>(
       await decryptNote(updated);
       return updated;
     } catch (err: unknown) {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-expect-error
-      return rejectWithValue(err?.message);
+      return rejectWithValue(err instanceof Error ? err.message : String(err));
     }
   }
 );
@@ -105,9 +101,7 @@ export const updateNote = createAsyncThunk<NoteType, NoteType>(
       await decryptNote(updated);
       return updated;
     } catch (err: unknown) {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-expect-error
-      return rejectWithValue(err?.message);
+      return rejectWithValue(err instanceof Error ? err.message : String(err));
     }
   }
 );
@@ -119,9 +113,7 @@ export const deleteNote = createAsyncThunk<string, string>(
       await idbStore.remove(noteId, 'notes');
       return noteId;
     } catch (err: unknown) {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-expect-error
-      return rejectWithValue(err?.message);
+      return rejectWithValue(err instanceof Error ? err.message : String(err));
     }
   }
 );
