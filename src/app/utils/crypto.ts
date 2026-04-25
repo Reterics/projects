@@ -8,16 +8,8 @@ export function isEncrypted(data: Partial<EncryptedData>): boolean {
   return !!(data.encrypted && data.iv && data.salt);
 }
 
-function getMasterPassphrase(): string {
-  const passphrase = process.env.NEXT_PUBLIC_PASSPHRASE;
-  if (!passphrase) {
-    throw new Error('NEXT_PUBLIC_PASSPHRASE environment variable is not set');
-  }
-  return passphrase;
-}
-
 export async function setActivePassphrase(newPassphrase: string) {
-  const passphrase = getMasterPassphrase();
+  const passphrase = process.env.NEXT_PUBLIC_PASSPHRASE ?? 'passphrase';
   const encrypted = await encryptData(newPassphrase, passphrase);
   localStorage.setItem('iv', encrypted.iv);
   localStorage.setItem('salt', encrypted.salt);
@@ -25,7 +17,7 @@ export async function setActivePassphrase(newPassphrase: string) {
 }
 
 async function getActivePassphrase(): Promise<string> {
-  const passphrase = getMasterPassphrase();
+  const passphrase = process.env.NEXT_PUBLIC_PASSPHRASE ?? 'passphrase';
 
   const encrypted = localStorage.getItem('encrypted');
   const salt = localStorage.getItem('salt');
