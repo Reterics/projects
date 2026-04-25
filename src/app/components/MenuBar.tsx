@@ -106,7 +106,7 @@ export default function MenuBar({model, onCreate}: Readonly<MenuBarProps>) {
                     ? toggleDropdown(item.label)
                     : handleMenuClick(item)
                 }
-                className={`text-sm font-medium hover:bg-zinc-200 px-2 py-1 rounded transition-colors ${
+                className={`text-sm font-medium hover:bg-zinc-200 px-2 py-1 rounded-sm transition-colors ${
                   item.className ?? ''
                 }`}
               >
@@ -115,7 +115,7 @@ export default function MenuBar({model, onCreate}: Readonly<MenuBarProps>) {
                 {item.label}
               </button>
               {hasDropdown && openDropdown === item.label && (
-                <div className='absolute left-0 top-full mt-1 w-32 bg-zinc-100 border border-zinc-300 rounded shadow z-50'>
+                <div className='absolute left-0 top-full mt-1 w-32 bg-zinc-100 border border-zinc-300 rounded-sm shadow-sm z-50'>
                   <ul className='flex flex-col'>
                     {item.items?.map((subItem, index) => {
                       if (subItem.separator) {
@@ -155,7 +155,7 @@ export default function MenuBar({model, onCreate}: Readonly<MenuBarProps>) {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           onKeyDown={onSearchKeyDown}
-          className='text-sm bg-zinc-200 hover:bg-zinc-50 focus:bg-zinc-50 focus:outline-none rounded px-2 py-1 placeholder-zinc-500'
+          className='text-sm bg-zinc-200 hover:bg-zinc-50 focus:bg-zinc-50 focus:outline-none rounded-sm px-2 py-1 placeholder-zinc-500'
         />
         <div className='text-sm font-light whitespace-nowrap'>{currentTime}</div>
       </div>

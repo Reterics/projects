@@ -33,7 +33,7 @@ export default function Dropdown({
       </button>
 
       {isOpen && (
-        <div className='absolute right-0 mt-2 w-56 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 z-10'>
+        <div className='absolute right-0 mt-2 w-56 rounded-md bg-white shadow-lg ring-1 ring-black/5 z-10'>
           {options.map(({value, icon, label}) => (
             <button
               key={value}

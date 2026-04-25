@@ -58,7 +58,7 @@ export function ContextMenu({
     <div
       ref={menuRef}
       style={{position: 'fixed', top: y, left: x, zIndex: 999}}
-      className='absolute z-50 bg-white border border-gray-200 rounded shadow text-sm'
+      className='absolute z-50 bg-white border border-gray-200 rounded-sm shadow-sm text-sm'
     >
       {children}
     </div>,
